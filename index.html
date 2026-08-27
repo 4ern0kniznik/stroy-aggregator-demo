@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<title>Цвет и цена</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ── Токены. Хром намеренно нейтрально-серый: любой цветной фон
+   искажает восприятие образцов, а это инструмент подбора цвета. ── */
+:root{
+  --ground:#F1F1F0; --surface:#FFFFFF; --surface-2:#E9E9E7;
+  --ink:#17181A; --muted:#6A6D71; --line:#D7D8D5;
+  --accent:#1B5E8C; --accent-ink:#FFFFFF;
+  --ok:#2F7D53; --near:#8A6D14; --far:#9A4F2C; --off:#6A6D71;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05);
+  --fs:16px; --ls:0em; --r:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#1A1B1C; --surface:#232426; --surface-2:#2C2E30;
+    --ink:#ECECEA; --muted:#9A9DA1; --line:#3A3C3F;
+    --accent:#6FB3DC; --accent-ink:#0F1416;
+    --ok:#63BE8C; --near:#D2AF4A; --far:#DE8C63; --off:#9A9DA1;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#1A1B1C; --surface:#232426; --surface-2:#2C2E30;
+  --ink:#ECECEA; --muted:#9A9DA1; --line:#3A3C3F;
+  --accent:#6FB3DC; --accent-ink:#0F1416;
+  --ok:#63BE8C; --near:#D2AF4A; --far:#DE8C63; --off:#9A9DA1;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+/* Режимы для слабовидящих — ГОСТ Р 52872. Перекрывают обе темы. */
+:root[data-vision="bw"]{--ground:#FFFFFF;--surface:#FFFFFF;--surface-2:#FFFFFF;--ink:#000000;--muted:#000000;--line:#000000;--accent:#000000;--accent-ink:#FFFFFF;--ok:#000000;--near:#000000;--far:#000000;--off:#000000;--shadow:none}
+:root[data-vision="wb"]{--ground:#000000;--surface:#000000;--surface-2:#000000;--ink:#FFFFFF;--muted:#FFFFFF;--line:#FFFFFF;--accent:#FFFFFF;--accent-ink:#000000;--ok:#FFFFFF;--near:#FFFFFF;--far:#FFFFFF;--off:#FFFFFF;--shadow:none}
+:root[data-vision="yb"]{--ground:#000000;--surface:#000000;--surface-2:#000000;--ink:#FFE600;--muted:#FFE600;--line:#FFE600;--accent:#FFE600;--accent-ink:#000000;--ok:#FFE600;--near:#FFE600;--far:#FFE600;--off:#FFE600;--shadow:none}
+:root[data-vision]:not([data-vision="none"]) .card,
+:root[data-vision]:not([data-vision="none"]) .panel{border-width:2px}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  font-size:var(--fs); letter-spacing:var(--ls); line-height:1.55;
+}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:1.5rem;letter-spacing:-.01em}
+h2{font-size:1.15rem}
+h3{font-size:1rem}
+.mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:920px;margin:0 auto;padding:0 16px 72px}
+header.top{position:sticky;top:0;z-index:20;background:var(--ground);border-bottom:1px solid var(--line)}
+.topin{max-width:920px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brandmark{width:26px;height:26px;border-radius:7px;flex:0 0 auto;
+  background:conic-gradient(from 210deg,#B23A2E,#C8892B,#3E7F4E,#1B5E8C,#5B3E8C,#B23A2E);
+  border:1px solid var(--line)}
+.tagline{color:var(--muted);font-size:.82rem;margin-left:auto}
+.btn{font:inherit;font-weight:500;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);padding:9px 14px;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:6px 10px;font-size:.85rem}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.pad{padding:16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+section{margin-top:22px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+
+/* ── Сканер ── */
+.scanner{display:grid;gap:14px}
+.viewport{position:relative;aspect-ratio:4/3;background:var(--surface-2);border-radius:var(--r);overflow:hidden;border:1px solid var(--line);display:grid;place-items:center}
+.viewport video{width:100%;height:100%;object-fit:cover;display:block}
+.viewport video[hidden]{display:none}
+.reticle{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center}
+.reticle i{display:block;width:38%;aspect-ratio:1;border:2px solid rgba(255,255,255,.9);border-radius:6px;box-shadow:0 0 0 9999px rgba(0,0,0,.28)}
+.vp-hint{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;font-size:.8rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.vp-idle{padding:24px;text-align:center;color:var(--muted)}
+.frames{display:flex;gap:8px;flex-wrap:wrap}
+.frame{width:62px;border-radius:8px;border:1px solid var(--line);overflow:hidden;background:var(--surface)}
+.frame .sw{height:44px}
+.frame .lb{font-size:.62rem;padding:3px 4px;text-align:center;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.frame.bad{opacity:.5}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.9rem}
+.chk input{margin-top:3px}
+
+/* ── Результат замера ── */
+.measure{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center}
+.measure .big{height:96px;border-radius:var(--r);border:1px solid var(--line)}
+.conf{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:.78rem;border:1px solid var(--line)}
+.conf b{width:8px;height:8px;border-radius:50%;display:block}
+
+/* ── Совпадения ── */
+.matches{display:flex;flex-direction:column;gap:0}
+.match{display:grid;grid-template-columns:8px 52px 1fr auto;gap:12px;align-items:center;
+  padding:11px 12px 11px 0;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;width:100%;font:inherit;color:inherit}
+.match:first-child{border-top:0}
+.match:hover{background:var(--surface-2)}
+.match[aria-pressed="true"]{background:var(--surface-2)}
+.match .stripe{width:6px;height:44px;border-radius:3px;margin-left:2px}
+.match .chip{height:44px;border-radius:6px;border:1px solid var(--line)}
+.match .nm{font-weight:500}
+.match .de{text-align:right}
+.match .de .v{font-size:1.05rem;font-weight:600}
+.verdict{font-size:.78rem;font-weight:500}
+.v-ok{color:var(--ok)} .v-near{color:var(--near)} .v-far{color:var(--far)} .v-off{color:var(--off)}
+
+/* ── Таблицы ── */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:520px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap}
+td.n,th.n{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.best td{background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.badge{display:inline-block;font-size:.68rem;padding:1px 6px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.stale{color:var(--far)}
+.link{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.link:hover{border-bottom-color:var(--accent)}
+
+/* ── Формы ── */
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+input[type=number],input[type=text],select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.88rem}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+
+/* ── Панель доступности ── */
+.a11y{display:none}
+.a11y.open{display:block}
+.a11y .grp{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.a11y .grp>span{font-size:.8rem;color:var(--muted);min-width:118px}
+.swatch-off .chip,.swatch-off .big,.swatch-off .sw,.swatch-off .stripe{background-image:none!important}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.82rem}
+@media (max-width:520px){
+  .match{grid-template-columns:6px 44px 1fr auto;gap:9px}
+  .measure{grid-template-columns:72px 1fr}
+  .measure .big{height:72px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="topin">
+    <span class="brandmark" aria-hidden="true"></span>
+    <h1>Цвет и цена</h1>
+    <span class="tagline">прототип · демонстрационные данные</span>
+    <button class="btn sm" id="a11yBtn" aria-expanded="false" aria-controls="a11y">Версия для слабовидящих</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel pad a11y" id="a11y" role="region" aria-label="Настройки отображения">
+    <div class="grp"><span>Размер шрифта</span>
+      <button class="btn sm" data-fs="16px">Обычный</button>
+      <button class="btn sm" data-fs="20px">Крупный</button>
+      <button class="btn sm" data-fs="26px">Очень крупный</button>
+    </div>
+    <div class="grp"><span>Цветовая схема</span>
+      <button class="btn sm" data-vis="none">Обычная</button>
+      <button class="btn sm" data-vis="bw">Чёрным по белому</button>
+      <button class="btn sm" data-vis="wb">Белым по чёрному</button>
+      <button class="btn sm" data-vis="yb">Жёлтым по чёрному</button>
+    </div>
+    <div class="grp"><span>Межбуквенный интервал</span>
+      <button class="btn sm" data-ls="0em">Обычный</button>
+      <button class="btn sm" data-ls="0.06em">Увеличенный</button>
+    </div>
+    <p class="small muted" style="margin:8px 0 0">Образцы цвета остаются настоящими даже в контрастных схемах — иначе инструмент подбора цвета теряет смысл. Поэтому у каждого цвета всегда есть название, код и координаты словами, а не только плашка.</p>
+  </div>
+
+  <section class="stack">
+    <div class="panel pad scanner">
+      <div>
+        <div class="eyebrow">Шаг 1 · замер</div>
+        <h2>Снимите поверхность 3–5 раз при разном свете</h2>
+        <p class="small muted" style="margin:6px 0 0">Один кадр врёт: телефон сам «исправляет» цвет под освещение. Серия при разном свете и белый лист в кадре убирают этот завал.</p>
+      </div>
+
+      <div class="viewport" id="viewport">
+        <div class="vp-idle" id="vpIdle">
+          <p style="margin:0 0 10px">Камера выключена</p>
+          <p class="small" style="margin:0">Включите камеру или используйте демо-съёмку</p>
+        </div>
+        <video id="video" playsinline muted autoplay hidden></video>
+        <div class="reticle" id="reticle" hidden><i></i></div>
+        <div class="vp-hint" id="vpHint" hidden>Наведите рамку на однотонный участок, без блика</div>
+      </div>
+
+      <div class="row">
+        <button class="btn primary" id="btnCam">Включить камеру</button>
+        <button class="btn" id="btnShot" disabled>Снять кадр</button>
+        <button class="btn" id="btnDemo">Демо-съёмка</button>
+        <button class="btn" id="btnReset">Сбросить</button>
+        <label class="btn sm" for="fileIn" style="margin-left:auto">Из фото
+          <input type="file" id="fileIn" accept="image/*" hidden></label>
+      </div>
+
+      <label class="chk"><input type="checkbox" id="wbChk" checked>
+        <span>В кадре есть белый лист А4 <span class="muted small">— калибровка по нему убирает цвет лампы. Без него точность заметно ниже.</span></span></label>
+
+      <div id="framesWrap" hidden>
+        <div class="eyebrow" style="margin-bottom:6px">Кадры серии</div>
+        <div class="frames" id="frames"></div>
+      </div>
+
+      <div class="row">
+        <button class="btn primary" id="btnMatch" disabled>Подобрать цвет</button>
+        <span class="small muted" id="serieHint">Нужно минимум 3 кадра</span>
+      </div>
+    </div>
+
+    <div class="panel pad" id="resultPanel" hidden>
+      <div class="eyebrow">Шаг 2 · результат замера</div>
+      <div class="measure" style="margin-top:10px">
+        <div class="big" id="bigSwatch"></div>
+        <div>
+          <div class="row" style="gap:8px">
+            <span class="conf" id="confBadge"><b></b><span></span></span>
+            <span class="badge" id="calBadge"></span>
+          </div>
+          <dl class="kv mono" style="margin:10px 0 0">
+            <dt>HEX</dt><dd id="mHex"></dd>
+            <dt>Lab</dt><dd id="mLab"></dd>
+            <dt>Разброс серии</dt><dd id="mSpread"></dd>
+          </dl>
+        </div>
+      </div>
+      <p class="small muted" id="confNote" style="margin:12px 0 0"></p>
+
+      <hr class="sep">
+      <div class="eyebrow">Шаг 3 · совпадения по веерам всех производителей</div>
+      <div class="matches" id="matches" style="margin-top:8px"></div>
+      <p class="small muted" style="margin:12px 0 0">ΔE2000 — насколько цвет отличается от найденного. Меньше 1 — глазом не отличить, 1–2 — видно, только если положить рядом, больше 3,5 — другой цвет.</p>
+    </div>
+
+    <div class="panel pad" id="buyPanel" hidden>
+      <div class="eyebrow">Шаг 4 · где купить</div>
+      <h2 id="buyTitle" style="margin-top:4px"></h2>
+      <div class="row small muted" id="buySub" style="margin-top:2px"></div>
+
+      <div class="grid3" style="margin-top:14px">
+        <label class="f">Площадь, м²<input type="number" id="area" value="34" min="1" step="1"></label>
+        <label class="f">Слоёв<input type="number" id="coats" value="2" min="1" max="4" step="1"></label>
+        <label class="f">Объём тары<select id="volSel"></select></label>
+      </div>
+      <p class="small muted" id="calcLine" style="margin:10px 0 0"></p>
+
+      <div class="tw" style="margin-top:12px"><table>
+        <thead><tr><th>Магазин</th><th class="n">Цена банки</th><th class="n">Нужно</th><th class="n">Итого</th><th>Наличие</th><th></th></tr></thead>
+        <tbody id="shopRows"></tbody>
+      </table></div>
+      <p class="small muted" style="margin:10px 0 0">Магазин попадает в сравнение, даже если он к нам не подключён и ничего не платит: цена берётся с его сайта, ссылка ведёт к нему.</p>
+
+      <hr class="sep">
+      <div class="eyebrow">Тот же цвет у другого производителя</div>
+      <div class="tw" style="margin-top:8px"><table>
+        <thead><tr><th>Цвет</th><th>Производитель</th><th class="n">ΔE</th><th class="n">Мин. цена банки</th><th class="n">Разница</th></tr></thead>
+        <tbody id="analogRows"></tbody>
+      </table></div>
+      <p class="small muted" style="margin:10px 0 0">Координаты всех вееров лежат в одном пространстве Lab, поэтому «чем заменить» — это один запрос ближайшего соседа. Приложение отдельного бренда так не умеет по определению.</p>
+
+      <hr class="sep">
+      <div class="eyebrow">Производитель</div>
+      <dl class="kv" id="makerKv" style="margin-top:8px"></dl>
+    </div>
+
+    <div class="panel pad">
+      <div class="eyebrow">Откуда цены</div>
+      <p class="small" style="margin:8px 0 0">Официальные фиды подключённых магазинов, прайсы и открытые цены с сайтов сетей. У каждой цены — время обновления; всё старше 48 часов помечается. Неактуальная цена убивает доверие мгновенно, поэтому лучше пометка, чем красивое число.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p style="margin:0 0 6px"><strong>Демонстрационный прототип.</strong> Названия производителей, коды цветов, цены, магазины и адреса — вымышленные. Настоящая здесь математика: sRGB → Lab, калибровка по белому, ΔE2000.</p>
+    <p style="margin:0">Методика замера описана в проектной документации. Камера работает в браузере телефона по HTTPS, устанавливать ничего не нужно.</p>
+  </footer>
+</div>
+<canvas id="cv" hidden></canvas>
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════
+   ЦВЕТОВАЯ МАТЕМАТИКА — настоящая, не декоративная.
+   sRGB → линейный RGB → XYZ (D65) → CIE L*a*b*, разница по CIEDE2000.
+   ═══════════════════════════════════════════════════════════════ */
+var D65 = [0.95047, 1.00000, 1.08883];
+
+function srgbToLin(c){ c = c/255; return c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+function linToSrgb(c){ c = c <= 0.0031308 ? c*12.92 : 1.055*Math.pow(c, 1/2.4) - 0.055;
+  return Math.max(0, Math.min(255, Math.round(c*255))); }
+
+function linRgbToXyz(r,g,b){
+  return [ r*0.4124564 + g*0.3575761 + b*0.1804375,
+           r*0.2126729 + g*0.7151522 + b*0.0721750,
+           r*0.0193339 + g*0.1191920 + b*0.9503041 ];
+}
+function xyzToLinRgb(x,y,z){
+  return [ x*3.2404542 + y*-1.5371385 + z*-0.4985314,
+           x*-0.9692660 + y*1.8760108 + z*0.0415560,
+           x*0.0556434 + y*-0.2040259 + z*1.0572252 ];
+}
+function f_lab(t){ return t > 0.008856451679 ? Math.cbrt(t) : (903.2962962*t + 16)/116; }
+function finv_lab(t){ var t3 = t*t*t; return t3 > 0.008856451679 ? t3 : (116*t - 16)/903.2962962; }
+
+function xyzToLab(X,Y,Z){
+  var fx = f_lab(X/D65[0]), fy = f_lab(Y/D65[1]), fz = f_lab(Z/D65[2]);
+  return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)];
+}
+function labToXyz(L,a,b){
+  var fy = (L+16)/116, fx = fy + a/500, fz = fy - b/200;
+  return [D65[0]*finv_lab(fx), D65[1]*finv_lab(fy), D65[2]*finv_lab(fz)];
+}
+function hexToRgb(h){ h = h.replace('#',''); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+function rgbToHex(r,g,b){ return '#' + [r,g,b].map(function(v){ return ('0'+v.toString(16)).slice(-2); }).join('').toUpperCase(); }
+function hexToLab(h){ var p = hexToRgb(h); var x = linRgbToXyz(srgbToLin(p[0]), srgbToLin(p[1]), srgbToLin(p[2])); return xyzToLab(x[0],x[1],x[2]); }
+function labToHex(L,a,b){ var x = labToXyz(L,a,b); var r = xyzToLinRgb(x[0],x[1],x[2]); return rgbToHex(linToSrgb(r[0]), linToSrgb(r[1]), linToSrgb(r[2])); }
+
+/* CIEDE2000 — с поправками на светлоту, насыщенность, оттенок и членом RT для синей области */
+function deltaE2000(l1, l2){
+  var L1=l1[0], a1=l1[1], b1=l1[2], L2=l2[0], a2=l2[1], b2=l2[2];
+  var rad = Math.PI/180, deg = 180/Math.PI;
+  var C1 = Math.sqrt(a1*a1 + b1*b1), C2 = Math.sqrt(a2*a2 + b2*b2);
+  var Cb = (C1 + C2)/2;
+  var Cb7 = Math.pow(Cb, 7);
+  var G = 0.5*(1 - Math.sqrt(Cb7/(Cb7 + 6103515625)));
+  var ap1 = (1+G)*a1, ap2 = (1+G)*a2;
+  var Cp1 = Math.sqrt(ap1*ap1 + b1*b1), Cp2 = Math.sqrt(ap2*ap2 + b2*b2);
+  var hp1 = (b1 === 0 && ap1 === 0) ? 0 : Math.atan2(b1, ap1)*deg; if (hp1 < 0) hp1 += 360;
+  var hp2 = (b2 === 0 && ap2 === 0) ? 0 : Math.atan2(b2, ap2)*deg; if (hp2 < 0) hp2 += 360;
+  var dLp = L2 - L1, dCp = Cp2 - Cp1;
+  var dhp = 0;
+  if (Cp1*Cp2 !== 0){
+    dhp = hp2 - hp1;
+    if (dhp > 180) dhp -= 360; else if (dhp < -180) dhp += 360;
+  }
+  var dHp = 2*Math.sqrt(Cp1*Cp2)*Math.sin(dhp*rad/2);
+  var Lbp = (L1 + L2)/2, Cbp = (Cp1 + Cp2)/2;
+  var hbp;
+  if (Cp1*Cp2 === 0) hbp = hp1 + hp2;
+  else {
+    hbp = (hp1 + hp2)/2;
+    if (Math.abs(hp1 - hp2) > 180) hbp += (hp1 + hp2 < 360) ? 180 : -180;
+  }
+  var T = 1 - 0.17*Math.cos((hbp - 30)*rad) + 0.24*Math.cos(2*hbp*rad)
+            + 0.32*Math.cos((3*hbp + 6)*rad) - 0.20*Math.cos((4*hbp - 63)*rad);
+  var dTh = 30*Math.exp(-Math.pow((hbp - 275)/25, 2));
+  var Cbp7 = Math.pow(Cbp, 7);
+  var RC = 2*Math.sqrt(Cbp7/(Cbp7 + 6103515625));
+  var SL = 1 + (0.015*Math.pow(Lbp - 50, 2))/Math.sqrt(20 + Math.pow(Lbp - 50, 2));
+  var SC = 1 + 0.045*Cbp;
+  var SH = 1 + 0.015*Cbp*T;
+  var RT = -Math.sin(2*dTh*rad)*RC;
+  return Math.sqrt(Math.pow(dLp/SL, 2) + Math.pow(dCp/SC, 2) + Math.pow(dHp/SH, 2)
+         + RT*(dCp/SC)*(dHp/SH));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ДЕМОНСТРАЦИОННЫЕ ДАННЫЕ. Бренды, цвета, магазины — вымышленные.
+   ═══════════════════════════════════════════════════════════════ */
+var BRANDS = {
+  'Колорика':  { owner:'ГК «Колорика»',       country:'Россия',   plant:'Ярославль',        perL:780,  cover:9,  line:'Интерьерная матовая',   base:'база A' },
+  'Нордфарб':  { owner:'Nordfarb Group Oy',   country:'Финляндия',plant:'Всеволожск, РФ',   perL:1240, cover:10, line:'Premium Interior 7',    base:'база A' },
+  'Текстон':   { owner:'АО «Текстон»',        country:'Россия',   plant:'Тверь',            perL:620,  cover:8,  line:'Стандарт интерьер',     base:'база 1' },
+  'Палитра-М': { owner:'ООО «Палитра-М»',     country:'Россия',   plant:'Электросталь',     perL:890,  cover:9,  line:'Мастер Интерьер',       base:'база C' }
+};
+var VOLUMES = [0.9, 2.7, 9];
+var VOL_K = { '0.9':1.18, '2.7':1.0, '9':0.86 };
+
+var FAMILIES = [
+  ['Песчаный берег','K-2104','#E4DCC8','Дюна','N-1180','#E6DECB','Песок','T-321','#E2D9C2','Топлёное молоко','P-45','#E9E1CE'],
+  ['Тёплый белый','K-1002','#F2EDE3','Лён','N-1010','#F3EEE6','Белый тёплый','T-102','#F1EBE0','Сливки','P-11','#F4EFE5'],
+  ['Холодный белый','K-1005','#EFF1F2','Снег','N-1005','#F0F2F4','Белый нейтр.','T-101','#EDEFF0','Иней','P-13','#F1F3F5'],
+  ['Светлый камень','K-3210','#D3D2CC','Гранит светлый','N-3120','#D5D4CE','Серый 10','T-410','#D0CFC9','Пепел','P-62','#D6D5CF'],
+  ['Графит','K-3902','#4A4E52','Сланец','N-3910','#4C5055','Графит','T-455','#484C50','Тёмный камень','P-77','#4E5257'],
+  ['Шалфей','K-5140','#AFBBA4','Полынь','N-5130','#B2BEA7','Зелёный 14','T-520','#ACB8A1','Оливковый дым','P-51','#B4C0A9'],
+  ['Хвойный','K-5820','#2E5244','Бор','N-5810','#305547','Зелёный тёмный','T-560','#2B4F41','Малахит','P-58','#325749'],
+  ['Небо','K-6110','#BBD0DE','Морозное утро','N-6120','#BED3E1','Голубой 11','T-610','#B8CDDB','Лазурь светлая','P-64','#C0D5E3'],
+  ['Индиго','K-6840','#2A4A78','Ночной фьорд','N-6830','#2C4D7C','Синий тёмный','T-680','#274574','Кобальт','P-69','#2E507F'],
+  ['Терракота','K-7420','#B2664A','Обожжённая глина','N-7410','#B5694D','Кирпичный','T-740','#AF6347','Охра красная','P-74','#B76C50'],
+  ['Горчица','K-8330','#C9A23F','Пряность','N-8320','#CCA542','Жёлтый 33','T-830','#C69F3C','Шафран','P-83','#CEA745'],
+  ['Пыльная роза','K-9250','#D3AEAA','Вереск','N-9240','#D6B1AD','Розовый 25','T-925','#D0ABA7','Пудра','P-92','#D8B3AF']
+];
+var BRAND_ORDER = ['Колорика','Нордфарб','Текстон','Палитра-М'];
+
+var FAN = [];
+FAMILIES.forEach(function(row, fi){
+  for (var i = 0; i < 4; i++){
+    var brand = BRAND_ORDER[i];
+    var name = row[i*3], code = row[i*3+1], hex = row[i*3+2];
+    FAN.push({ id: 'c' + fi + '_' + i, family: fi, brand: brand, name: name, code: code,
+               hex: hex, lab: hexToLab(hex) });
+  }
+});
+
+var SHOPS = [
+  { id:'s1', name:'СтройДвор',      k:1.00, addr:'ул. Строителей, 12',  geo:'55.60630,37.53260', tint:true,  upd:3  },
+  { id:'s2', name:'Мастер-Хаус',    k:0.92, addr:'Северное ш., 40',     geo:'55.61060,37.51840', tint:true,  upd:9  },
+  { id:'s3', name:'Краски Плюс',    k:0.87, addr:'ул. Липовая, 12',     geo:'55.59820,37.55150', tint:true,  upd:26 },
+  { id:'s4', name:'ДомРемонт',      k:1.09, addr:'Сосновый пр., 14',    geo:'55.60140,37.57980', tint:false, upd:5  },
+  { id:'s5', name:'Отделка-Маркет', k:0.95, addr:'ул. Озёрная, 22',     geo:'55.58830,37.54690', tint:true,  upd:61 },
+  { id:'s6', name:'Стройбаза 7',    k:0.83, addr:'ул. Полевая, 5',      geo:'55.60570,37.52920', tint:false, upd:14 },
+  { id:'s7', name:'ТД Фасад',       k:1.03, addr:'ул. Ясная, 3к1',      geo:'55.58240,37.52070', tint:true,  upd:7  }
+];
+
+function hash(str){ var h = 0; for (var i = 0; i < str.length; i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; } return h; }
+function inStock(brand, shop, vol){ return hash(brand + shop.id + vol) % 10 < 8; }
+function priceOf(brand, shop, vol){
+  var base = BRANDS[brand].perL * vol * VOL_K[String(vol)] * shop.k;
+  var jitter = 1 + ((hash(brand + shop.id + vol) % 9) - 4) / 100;
+  return Math.round(base * jitter / 10) * 10;
+}
+function money(v){ return v.toLocaleString('ru-RU') + ' ₽'; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ПОДПИСИ ПО ПОРОГАМ ΔE — те же, что в техблоке
+   ═══════════════════════════════════════════════════════════════ */
+function verdict(de){
+  if (de < 1.0)  return { t:'Совпадение',     c:'v-ok',   s:'var(--ok)',   n:'глазом не отличить' };
+  if (de < 2.0)  return { t:'Почти совпадает',c:'v-near', s:'var(--near)', n:'заметно, только если положить рядом' };
+  if (de < 3.5)  return { t:'Близкий оттенок',c:'v-far',  s:'var(--far)',  n:'видно при сравнении' };
+  return           { t:'Другой цвет',   c:'v-off',  s:'var(--off)',  n:'ближайшее, что нашлось' };
+}
+</script>
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════
+   ЗАМЕР: захват кадра, отсев бликов и теней, калибровка по белому
+   ═══════════════════════════════════════════════════════════════ */
+var cv = document.getElementById('cv'), ctx = cv.getContext('2d', { willReadFrequently:true });
+var video = document.getElementById('video');
+var frames = [];
+var stream = null;
+
+/* Берём центральное окно кадра, отбрасываем пересветы, провалы и хвосты
+   распределения — так уходят блик, микротень и фактура поверхности. */
+function sampleWindow(w, h){
+  var side = Math.round(Math.min(w, h) * 0.38);
+  var x0 = Math.round((w - side)/2), y0 = Math.round((h - side)/2);
+  var d = ctx.getImageData(x0, y0, side, side).data;
+  var px = [];
+  for (var i = 0; i < d.length; i += 4){
+    var r = srgbToLin(d[i]), g = srgbToLin(d[i+1]), b = srgbToLin(d[i+2]);
+    var Y = 0.2126729*r + 0.7151522*g + 0.0721750*b;
+    if (Y > 0.94 || Y < 0.004) continue;          // блик и провал в тень
+    px.push([r, g, b, Y]);
+  }
+  if (px.length < side*side*0.4) return null;      // кадр забракован
+  px.sort(function(a, b){ return a[3] - b[3]; });
+  var lo = Math.floor(px.length*0.10), hi = Math.ceil(px.length*0.90);
+  var sr = 0, sg = 0, sb = 0, n = 0;
+  for (var j = lo; j < hi; j++){ sr += px[j][0]; sg += px[j][1]; sb += px[j][2]; n++; }
+  return n ? [sr/n, sg/n, sb/n] : null;
+}
+
+/* Белая карта: самые светлые 2 % кадра. Даёт цвет источника света. */
+function whiteRef(w, h){
+  var d = ctx.getImageData(0, 0, w, h).data;
+  var px = [];
+  for (var i = 0; i < d.length; i += 16){         // каждый 4-й пиксель
+    var r = srgbToLin(d[i]), g = srgbToLin(d[i+1]), b = srgbToLin(d[i+2]);
+    var Y = 0.2126729*r + 0.7151522*g + 0.0721750*b;
+    if (Y > 0.985) continue;                       // клиппинг не годится в эталон
+    px.push([r, g, b, Y]);
+  }
+  if (px.length < 50) return null;
+  px.sort(function(a, b){ return b[3] - a[3]; });
+  var take = Math.max(20, Math.floor(px.length*0.02));
+  var sr = 0, sg = 0, sb = 0;
+  for (var j = 0; j < take; j++){ sr += px[j][0]; sg += px[j][1]; sb += px[j][2]; }
+  return [sr/take, sg/take, sb/take];
+}
+
+/* Диагональная поправка фон Криза: убираем цвет лампы, приводим к D65 */
+function toLabCalibrated(linRgb, wLin){
+  var xyz = linRgbToXyz(linRgb[0], linRgb[1], linRgb[2]);
+  if (wLin){
+    var w = linRgbToXyz(wLin[0], wLin[1], wLin[2]);
+    if (w[1] > 0.001){
+      var s = 1/w[1];
+      w = [w[0]*s, w[1]*s, w[2]*s];
+      xyz = [ xyz[0]*(D65[0]/w[0]), xyz[1]*(D65[1]/w[1]), xyz[2]*(D65[2]/w[2]) ];
+    }
+  }
+  return xyzToLab(xyz[0], xyz[1], xyz[2]);
+}
+
+function grabFrom(source, w, h, label){
+  cv.width = w; cv.height = h;
+  ctx.drawImage(source, 0, 0, w, h);
+  var patch = sampleWindow(w, h);
+  var wref = document.getElementById('wbChk').checked ? whiteRef(w, h) : null;
+  if (!patch){ addFrame(null, label); return false; }
+  addFrame({ lab: toLabCalibrated(patch, wref), calibrated: !!wref }, label);
+  return true;
+}
+
+function addFrame(f, label){
+  frames.push(f ? { lab:f.lab, calibrated:f.calibrated, label:label, ok:true }
+                : { ok:false, label:label });
+  renderFrames();
+}
+
+function renderFrames(){
+  var wrap = document.getElementById('framesWrap'), box = document.getElementById('frames');
+  wrap.hidden = frames.length === 0;
+  box.innerHTML = '';
+  frames.forEach(function(f, i){
+    var el = document.createElement('div');
+    el.className = 'frame' + (f.ok ? '' : ' bad');
+    var hex = f.ok ? labToHex(f.lab[0], f.lab[1], f.lab[2]) : 'transparent';
+    el.innerHTML = '<div class="sw" style="background:' + hex + '"></div>' +
+                   '<div class="lb">' + (f.ok ? (f.label || ('кадр ' + (i+1))) : 'брак') + '</div>';
+    box.appendChild(el);
+  });
+  var good = frames.filter(function(f){ return f.ok; }).length;
+  document.getElementById('btnMatch').disabled = good < 2;
+  document.getElementById('serieHint').textContent =
+    good === 0 ? 'Нужно минимум 3 кадра' :
+    good < 3   ? 'Кадров: ' + good + '. Для уверенного результата нужно 3–5 при разном свете' :
+                 'Кадров: ' + good + '. Можно подбирать';
+}
+
+/* ── Камера ── */
+document.getElementById('btnCam').addEventListener('click', function(){
+  if (stream){ stopCam(); return; }
+  navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1280 } }, audio:false })
+    .then(function(s){
+      stream = s; video.srcObject = s; video.hidden = false;
+      document.getElementById('vpIdle').hidden = true;
+      document.getElementById('reticle').hidden = false;
+      document.getElementById('vpHint').hidden = false;
+      document.getElementById('btnShot').disabled = false;
+      document.getElementById('btnCam').textContent = 'Выключить камеру';
+    })
+    .catch(function(){
+      document.getElementById('vpIdle').innerHTML =
+        '<p style="margin:0 0 8px">Камера недоступна</p>' +
+        '<p class="small" style="margin:0">Разрешите доступ в браузере, откройте страницу по HTTPS — либо используйте демо-съёмку или фото из галереи.</p>';
+    });
+});
+function stopCam(){
+  if (stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+  video.hidden = true;
+  document.getElementById('vpIdle').hidden = false;
+  document.getElementById('reticle').hidden = true;
+  document.getElementById('vpHint').hidden = true;
+  document.getElementById('btnShot').disabled = true;
+  document.getElementById('btnCam').textContent = 'Включить камеру';
+}
+
+var SHOT_LABELS = ['свет 1','свет 2','свет 3','свет 4','свет 5','свет 6'];
+document.getElementById('btnShot').addEventListener('click', function(){
+  if (!stream || !video.videoWidth) return;
+  var w = 480, h = Math.round(480 * video.videoHeight / video.videoWidth);
+  grabFrom(video, w, h, SHOT_LABELS[frames.length] || ('кадр ' + (frames.length+1)));
+});
+
+/* ── Фото из галереи ── */
+document.getElementById('fileIn').addEventListener('change', function(e){
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+  var img = new Image();
+  img.onload = function(){
+    var w = 480, h = Math.round(480 * img.height / img.width);
+    grabFrom(img, w, h, 'фото ' + (frames.length+1));
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(file);
+  e.target.value = '';
+});
+
+/* ── Демо-съёмка: симуляция серии для десктопа и показа ──
+   Берём случайный цвет, «портим» его под разные лампы. Если калибровка
+   включена — искажение остаточное (как после поправки по белой карте). */
+document.getElementById('btnDemo').addEventListener('click', function(){
+  frames = [];
+  var src = FAN[Math.floor(Math.random()*FAN.length)];
+  var trueLab = [ src.lab[0] + (Math.random()*4 - 2),
+                  src.lab[1] + (Math.random()*3 - 1.5),
+                  src.lab[2] + (Math.random()*3 - 1.5) ];
+  var calibrated = document.getElementById('wbChk').checked;
+  var sigma = calibrated ? 1.1 : 4.2;
+  var labels = ['окно','пасмурно','лампа','LED'];
+  for (var i = 0; i < 4; i++){
+    frames.push({ ok:true, calibrated:calibrated, label:labels[i], lab:[
+      trueLab[0] + (Math.random()*2 - 1)*sigma*1.2,
+      trueLab[1] + (Math.random()*2 - 1)*sigma,
+      trueLab[2] + (Math.random()*2 - 1)*sigma*1.4
+    ]});
+  }
+  renderFrames();
+});
+
+document.getElementById('btnReset').addEventListener('click', function(){
+  frames = []; renderFrames();
+  document.getElementById('resultPanel').hidden = true;
+  document.getElementById('buyPanel').hidden = true;
+  window.scrollTo({ top:0, behavior:'smooth' });
+});
+</script>
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════
+   АГРЕГАЦИЯ СЕРИИ И ПОДБОР
+   ═══════════════════════════════════════════════════════════════ */
+function median(arr){
+  var a = arr.slice().sort(function(x, y){ return x - y; });
+  var m = Math.floor(a.length/2);
+  return a.length % 2 ? a[m] : (a[m-1] + a[m])/2;
+}
+
+var current = null;   // { lab, hex, spread, calibrated, kept, dropped }
+
+document.getElementById('btnMatch').addEventListener('click', function(){
+  var good = frames.filter(function(f){ return f.ok; });
+  if (good.length < 2) return;
+
+  var med = [ median(good.map(function(f){ return f.lab[0]; })),
+              median(good.map(function(f){ return f.lab[1]; })),
+              median(good.map(function(f){ return f.lab[2]; })) ];
+
+  // кадр, отстоящий от медианы больше чем на ΔE 6, в расчёт не идёт
+  var kept = good.filter(function(f){ return deltaE2000(f.lab, med) <= 6; });
+  if (kept.length < 2) kept = good;
+  var med2 = [ median(kept.map(function(f){ return f.lab[0]; })),
+               median(kept.map(function(f){ return f.lab[1]; })),
+               median(kept.map(function(f){ return f.lab[2]; })) ];
+
+  var spread = 0;
+  kept.forEach(function(f){ spread = Math.max(spread, deltaE2000(f.lab, med2)); });
+
+  current = { lab: med2, hex: labToHex(med2[0], med2[1], med2[2]), spread: spread,
+              calibrated: kept.some(function(f){ return f.calibrated; }),
+              kept: kept.length, dropped: good.length - kept.length };
+  renderResult();
+});
+
+function renderResult(){
+  var p = document.getElementById('resultPanel');
+  p.hidden = false;
+  document.getElementById('bigSwatch').style.background = current.hex;
+  document.getElementById('mHex').textContent = current.hex;
+  document.getElementById('mLab').textContent =
+    'L ' + current.lab[0].toFixed(1) + '  a ' + current.lab[1].toFixed(1) + '  b ' + current.lab[2].toFixed(1);
+  document.getElementById('mSpread').textContent =
+    'ΔE ' + current.spread.toFixed(1) + '  ·  кадров в расчёте ' + current.kept +
+    (current.dropped ? ', отброшено ' + current.dropped : '');
+
+  var conf = current.spread <= 2 ? { t:'Уверенно',            c:'var(--ok)' }
+           : current.spread <= 5 ? { t:'Приблизительно',      c:'var(--near)' }
+           :                       { t:'Недостаточно данных', c:'var(--far)' };
+  var badge = document.getElementById('confBadge');
+  badge.querySelector('b').style.background = conf.c;
+  badge.querySelector('span').textContent = conf.t;
+  badge.style.borderColor = conf.c;
+
+  var cal = document.getElementById('calBadge');
+  cal.textContent = current.calibrated ? 'калибровка по белому' : 'без калибровки';
+
+  document.getElementById('confNote').textContent =
+    current.spread <= 2
+      ? 'Кадры сошлись между собой — результату можно верить.'
+      : current.spread <= 5
+        ? 'Кадры разошлись. Снимите ещё раз при другом освещении, с белым листом в кадре.'
+        : 'Кадры разошлись слишком сильно. Показываем ближайшее, но полагаться на это нельзя: переснимите на однотонном участке без блика.';
+
+  var matches = FAN.map(function(c){ return { c:c, de:deltaE2000(current.lab, c.lab) }; })
+                   .sort(function(a, b){ return a.de - b.de; })
+                   .slice(0, 5);
+  var box = document.getElementById('matches');
+  box.innerHTML = '';
+  matches.forEach(function(m, i){
+    var v = verdict(m.de);
+    var btn = document.createElement('button');
+    btn.className = 'match';
+    btn.type = 'button';
+    btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    btn.innerHTML =
+      '<span class="stripe" style="background:' + v.s + '"></span>' +
+      '<span class="chip" style="background:' + m.c.hex + '"></span>' +
+      '<span><span class="nm">' + m.c.name + '</span><br>' +
+        '<span class="small muted mono">' + m.c.brand + ' · ' + m.c.code + ' · ' + m.c.hex + '</span></span>' +
+      '<span class="de"><span class="v mono ' + v.c + '">' + m.de.toFixed(2) + '</span><br>' +
+        '<span class="verdict ' + v.c + '">' + v.t + '</span></span>';
+    btn.addEventListener('click', function(){
+      Array.prototype.forEach.call(box.children, function(el){ el.setAttribute('aria-pressed','false'); });
+      btn.setAttribute('aria-pressed','true');
+      selectColor(m.c, m.de);
+    });
+    box.appendChild(btn);
+  });
+  selectColor(matches[0].c, matches[0].de);
+  p.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ПОКУПКА: расчёт литража, сравнение магазинов, аналоги
+   ═══════════════════════════════════════════════════════════════ */
+var picked = null, pickedDe = 0;
+
+function selectColor(c, de){
+  picked = c; pickedDe = de;
+  var b = BRANDS[c.brand];
+  document.getElementById('buyPanel').hidden = false;
+  document.getElementById('buyTitle').textContent = c.name;
+  document.getElementById('buySub').innerHTML =
+    '<span class="mono">' + c.brand + ' · ' + c.code + '</span>' +
+    '<span class="badge">' + b.line + '</span>' +
+    '<span class="badge">' + b.base + '</span>' +
+    '<span class="badge">расход ' + b.cover + ' м²/л</span>' +
+    '<span class="badge">ΔE до замера ' + de.toFixed(2) + '</span>';
+
+  var sel = document.getElementById('volSel');
+  if (!sel.options.length){
+    VOLUMES.forEach(function(v){
+      var o = document.createElement('option');
+      o.value = String(v); o.textContent = String(v).replace('.', ',') + ' л';
+      sel.appendChild(o);
+    });
+    sel.value = '9';
+  }
+  renderBuy();
+
+  var kv = document.getElementById('makerKv');
+  kv.innerHTML = '<dt>Бренд</dt><dd>' + c.brand + '</dd>' +
+                 '<dt>Владелец</dt><dd>' + b.owner + '</dd>' +
+                 '<dt>Страна</dt><dd>' + b.country + '</dd>' +
+                 '<dt>Производство</dt><dd>' + b.plant + '</dd>';
+}
+
+function calcNeed(brand, vol){
+  var area = Math.max(1, parseFloat(document.getElementById('area').value) || 1);
+  var coats = Math.max(1, parseInt(document.getElementById('coats').value, 10) || 1);
+  var litres = area * coats / BRANDS[brand].cover;
+  return { area:area, coats:coats, litres:litres, cans: Math.ceil(litres/vol) };
+}
+
+function renderBuy(){
+  if (!picked) return;
+  var vol = parseFloat(document.getElementById('volSel').value);
+  var need = calcNeed(picked.brand, vol);
+  document.getElementById('calcLine').textContent =
+    need.area + ' м² × ' + need.coats + ' сл. ÷ ' + BRANDS[picked.brand].cover +
+    ' м²/л = ' + need.litres.toFixed(1).replace('.', ',') + ' л  →  ' + need.cans + ' × ' +
+    String(vol).replace('.', ',') + ' л';
+
+  // Цветная краска колеруется на месте: магазин без колеровочного поста
+  // продать этот цвет не может, сколько бы у него ни стоила база.
+  var rows = SHOPS.map(function(s){
+    var pr = priceOf(picked.brand, s, vol);
+    var why = !s.tint ? 'нет колеровки' : (!inStock(picked.brand, s, vol) ? 'нет базы в наличии' : null);
+    return { s:s, ok:!why, why:why, price:pr, total:pr * need.cans };
+  });
+  var avail = rows.filter(function(r){ return r.ok; });
+  avail.sort(function(a, b){ return a.total - b.total; });
+  var out = rows.filter(function(r){ return !r.ok; });
+  var best = avail.length ? avail[0].total : null;
+
+  var tb = document.getElementById('shopRows');
+  tb.innerHTML = '';
+  avail.concat(out).forEach(function(r){
+    var tr = document.createElement('tr');
+    if (r.ok && r.total === best) tr.className = 'best';
+    var route = 'https://yandex.ru/maps/?rtext=~' + r.s.geo + '&rtt=pd';
+    tr.innerHTML =
+      '<td>' + r.s.name +
+        '<br><span class="small muted">' + r.s.addr +
+        (r.s.tint ? ' · колеровка на месте' : ' · без колеровки') + '</span></td>' +
+      '<td class="n">' + (r.ok ? money(r.price) : '—') + '</td>' +
+      '<td class="n">' + (r.ok ? need.cans + ' шт' : '—') + '</td>' +
+      '<td class="n">' + (r.ok ? '<strong>' + money(r.total) + '</strong>' : '—') + '</td>' +
+      '<td>' + (r.ok
+        ? '<span class="small' + (r.s.upd > 48 ? ' stale' : '') + '">цена ' + r.s.upd + ' ч назад' +
+          (r.s.upd > 48 ? ' · устарела' : '') + '</span>'
+        : '<span class="small muted">' + r.why + '</span>') + '</td>' +
+      '<td><a class="link small" href="' + route + '" target="_blank" rel="noopener">Маршрут</a></td>';
+    tb.appendChild(tr);
+  });
+
+  // Аналоги: ближайшие цвета других производителей в том же пространстве Lab
+  var minFor = function(brand){
+    var m = Infinity;
+    SHOPS.forEach(function(s){ if (s.tint && inStock(brand, s, vol)) m = Math.min(m, priceOf(brand, s, vol)); });
+    return m === Infinity ? null : m;
+  };
+  var basePrice = minFor(picked.brand);
+  var an = FAN.filter(function(c){ return c.brand !== picked.brand; })
+              .map(function(c){ return { c:c, de: deltaE2000(picked.lab, c.lab) }; })
+              .sort(function(a, b){ return a.de - b.de; })
+              .filter(function(a){ return a.de <= 5; })   // дальше 5 это уже не аналог
+              .slice(0, 4);
+  var ab = document.getElementById('analogRows');
+  ab.innerHTML = '';
+  if (!an.length){
+    ab.innerHTML = '<tr><td colspan="5" class="small muted">У других производителей нет цвета ближе ΔE 5 — этот оттенок в базе уникален.</td></tr>';
+  }
+  an.forEach(function(a){
+    var v = verdict(a.de);
+    var p = minFor(a.c.brand);
+    var diff = (p !== null && basePrice !== null) ? p - basePrice : null;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><span class="chip" style="display:inline-block;width:22px;height:22px;vertical-align:-6px;margin-right:8px;background:' +
+        a.c.hex + '"></span>' + a.c.name + ' <span class="small muted mono">' + a.c.code + '</span></td>' +
+      '<td>' + a.c.brand + '</td>' +
+      '<td class="n ' + v.c + '">' + a.de.toFixed(2) + '</td>' +
+      '<td class="n">' + (p !== null ? money(p) : '—') + '</td>' +
+      '<td class="n">' + (diff === null ? '—' : (diff === 0 ? '0 ₽' : (diff > 0 ? '+' : '−') + money(Math.abs(diff)))) + '</td>';
+    ab.appendChild(tr);
+  });
+}
+
+['area','coats','volSel'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', renderBuy);
+  document.getElementById(id).addEventListener('change', renderBuy);
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ДОСТУПНОСТЬ — ГОСТ Р 52872
+   ═══════════════════════════════════════════════════════════════ */
+var root = document.documentElement;
+var a11yBtn = document.getElementById('a11yBtn'), a11y = document.getElementById('a11y');
+a11yBtn.addEventListener('click', function(){
+  var open = a11y.classList.toggle('open');
+  a11yBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+function store(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+function load(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+a11y.addEventListener('click', function(e){
+  var b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.fs){ root.style.setProperty('--fs', b.dataset.fs); store('fs', b.dataset.fs); }
+  if (b.dataset.ls){ root.style.setProperty('--ls', b.dataset.ls); store('ls', b.dataset.ls); }
+  if (b.dataset.vis){
+    if (b.dataset.vis === 'none') root.removeAttribute('data-vision');
+    else root.setAttribute('data-vision', b.dataset.vis);
+    store('vis', b.dataset.vis);
+  }
+});
+(function restore(){
+  var fs = load('fs'), ls = load('ls'), vis = load('vis');
+  if (fs) root.style.setProperty('--fs', fs);
+  if (ls) root.style.setProperty('--ls', ls);
+  if (vis && vis !== 'none') root.setAttribute('data-vision', vis);
+})();
+</script>
+</body>
+</html>
