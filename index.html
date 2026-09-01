@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <title>Цвет и цена</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* ── Токены. Хром намеренно нейтрально-серый: любой цветной фон
    искажает восприятие образцов, а это инструмент подбора цвета. ── */
@@ -143,6 +140,36 @@ input[type=number],input[type=text],select{font:inherit;padding:8px 10px;border-
 .a11y .grp{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
 .a11y .grp>span{font-size:.8rem;color:var(--muted);min-width:118px}
 .swatch-off .chip,.swatch-off .big,.swatch-off .sw,.swatch-off .stripe{background-image:none!important}
+
+/* ── Визуализатор (уровни 1 и 2) ── */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}
+.tab{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.viz-stage{position:relative;margin-top:12px;border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;background:var(--surface-2)}
+.viz-stage canvas{display:block;width:100%;height:auto;touch-action:none}
+.viz-empty{padding:34px 16px;text-align:center;color:var(--muted);font-size:.9rem}
+.scenes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.scene{font:inherit;font-size:.82rem;padding:5px 11px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);cursor:pointer}
+.scene[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
+.viz-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.viz-note{border-left:3px solid var(--near);padding:8px 0 8px 12px;margin-top:12px;font-size:.85rem;color:var(--muted)}
+.rangef{display:flex;flex-direction:column;gap:2px;font-size:.78rem;color:var(--muted);min-width:150px}
+.rangef input{width:100%}
+.truecolor{display:flex;gap:12px;align-items:center;margin-top:10px}
+.truecolor .sw{width:56px;height:38px;border-radius:8px;border:1px solid var(--line);flex:0 0 auto}
+
+/* ── Расчёт потребности по помещению ── */
+.room-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px;margin-top:12px}
+.surf{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-top:10px}
+.surf h3{font-size:.92rem;margin-bottom:6px}
+.surf .row{gap:10px}
+.est-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  border-top:2px solid var(--ink);padding-top:10px;margin-top:4px;font-size:1.05rem;font-weight:600}
+td.src{font-size:.72rem;color:var(--muted);max-width:190px;white-space:normal}
+tr.own td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
 
 footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.82rem}
 @media (max-width:520px){
@@ -280,6 +307,122 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:v
       <dl class="kv" id="makerKv" style="margin-top:8px"></dl>
     </div>
 
+    <div class="panel pad" id="vizPanel" hidden>
+      <div class="eyebrow">Шаг 5 · как это будет выглядеть</div>
+      <h2 style="margin-top:4px">Визуализатор</h2>
+      <p class="small muted" style="margin:6px 0 0">Цвет подставляется с сохранением освещённости: у каждого пикселя берётся его собственная светлота L, а меняются только оттенок и насыщенность. Поэтому тени, блики и фактура остаются на месте — их никто не трогает.</p>
+
+      <div class="tabs" role="tablist">
+        <button class="tab" id="tabScenes" role="tab" aria-selected="true">Готовые сцены</button>
+        <button class="tab" id="tabPhoto" role="tab" aria-selected="false">Своё фото</button>
+      </div>
+
+      <div id="vizScenes">
+        <div class="scenes" id="sceneList"></div>
+        <div class="viz-stage"><canvas id="sceneCv" width="880" height="520"></canvas></div>
+        <p class="small muted" style="margin:8px 0 0">Сцены нарисованы кодом прямо в браузере — внешних файлов и сетевых запросов на этой странице нет вообще. В рабочей версии на их месте интерьерные фотографии с размеченными стенами.</p>
+      </div>
+
+      <div id="vizPhoto" hidden>
+        <div class="viz-tools">
+          <label class="btn sm" for="vizFile">Загрузить фото
+            <input type="file" id="vizFile" accept="image/*" hidden></label>
+          <button class="btn sm" id="vizModeFill" aria-pressed="true">Выделить стену</button>
+          <button class="btn sm" id="vizModeAdd" aria-pressed="false">Кисть +</button>
+          <button class="btn sm" id="vizModeDel" aria-pressed="false">Ластик −</button>
+          <button class="btn sm" id="vizUndo">Отменить</button>
+          <button class="btn sm" id="vizClear">Сбросить маску</button>
+        </div>
+        <div class="viz-tools">
+          <label class="rangef">Допуск выделения <span class="mono" id="tolVal">12</span>
+            <input type="range" id="vizTol" min="3" max="30" step="1" value="12"></label>
+          <label class="rangef">Размер кисти <span class="mono" id="brushVal">28</span>
+            <input type="range" id="vizBrush" min="8" max="90" step="2" value="28"></label>
+          <label class="chk" style="margin-left:auto"><input type="checkbox" id="vizMaskView">
+            <span class="small">Показать маску</span></label>
+        </div>
+        <div class="viz-stage">
+          <canvas id="photoCv" width="880" height="520"></canvas>
+          <div class="viz-empty" id="vizEmpty">Загрузите фото своей комнаты и нажмите на стену — маска построится по близости цвета в Lab. Края правятся кистью.</div>
+        </div>
+        <p class="small muted" style="margin:8px 0 0">Всё считается на вашем телефоне: фотография никуда не отправляется, сервер о ней не знает. Ни нейросетей, ни загрузки моделей — маска строится заливкой по порогу ΔE в Lab.</p>
+      </div>
+
+      <div class="truecolor">
+        <span class="sw" id="vizTrueSw"></span>
+        <p class="small muted" style="margin:0">Слева — <strong>настоящий оттенок</strong> без освещения сцены. На картинке он всегда выглядит иначе, потому что там на него ложится свет комнаты.</p>
+      </div>
+
+      <div class="viz-note">Картинка ориентировочная. Итоговый цвет смотрите на выкраске у колеровочного поста: экран телефона не откалиброван, и один и тот же оттенок при разном блеске выглядит по-разному. Мы показываем картинку <em>после</em> подбора и ΔE, а не вместо них — проверяемое число важнее красивой сцены.</div>
+    </div>
+
+    <div class="panel pad" id="roomPanel">
+      <div class="eyebrow">Шаг 6 · сколько всего покупать</div>
+      <h2 style="margin-top:4px">Расчёт потребности по помещению</h2>
+      <p class="small muted" style="margin:6px 0 0">Камера не нужна. Вводите размеры — получаете список материалов с упаковками. Это расчёт материалов к закупке, а не сметная документация по ГЭСН или ФЕР.</p>
+
+      <div class="room-grid">
+        <label class="f">Длина, м<input type="number" id="rL" value="5.2" min="0.5" step="0.1"></label>
+        <label class="f">Ширина, м<input type="number" id="rW" value="3.4" min="0.5" step="0.1"></label>
+        <label class="f">Высота, м<input type="number" id="rH" value="2.7" min="1.8" step="0.05"></label>
+        <label class="f">Дверей<input type="number" id="rD" value="1" min="0" max="6" step="1"></label>
+        <label class="f">Окон<input type="number" id="rWin" value="1" min="0" max="6" step="1"></label>
+      </div>
+
+      <div class="surf">
+        <h3>Стены</h3>
+        <div class="row">
+          <label class="f" style="min-width:150px">Отделка<select id="sWall">
+            <option value="paint">Краска</option>
+            <option value="tile">Плитка</option>
+            <option value="wallpaper">Обои</option>
+            <option value="none">Не трогаем</option></select></label>
+          <label class="f" style="min-width:130px">Слоёв краски<select id="sWallCoats">
+            <option>1</option><option selected>2</option><option>3</option></select></label>
+          <label class="chk" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="sPrimer" checked><span class="small">Грунтовать</span></label>
+        </div>
+      </div>
+
+      <div class="surf">
+        <h3>Пол</h3>
+        <div class="row">
+          <label class="f" style="min-width:150px">Покрытие<select id="sFloor">
+            <option value="laminate">Ламинат / паркетная доска</option>
+            <option value="tile">Плитка / керамогранит</option>
+            <option value="none">Не трогаем</option></select></label>
+          <label class="f" style="min-width:150px">Схема укладки<select id="sPattern">
+            <option value="straight">Прямая</option>
+            <option value="diagonal">Диагональ</option>
+            <option value="herring">Ёлочка</option></select></label>
+          <label class="chk" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="sSkirt" checked><span class="small">Плинтус</span></label>
+        </div>
+      </div>
+
+      <div class="surf">
+        <h3>Потолок</h3>
+        <div class="row">
+          <label class="f" style="min-width:150px">Отделка<select id="sCeil">
+            <option value="paint">Краска</option>
+            <option value="none">Не трогаем</option></select></label>
+        </div>
+      </div>
+
+      <p class="small muted" id="geoLine" style="margin:12px 0 0"></p>
+
+      <div class="tw" style="margin-top:10px"><table>
+        <thead><tr><th>Позиция</th><th class="n">Нужно</th><th class="n">Упаковок</th><th class="n">Цена</th><th class="n">Сумма</th><th>Норма и источник</th></tr></thead>
+        <tbody id="estRows"></tbody>
+      </table></div>
+
+      <div class="est-total"><span>Материалы на помещение</span><span class="mono" id="estTotal"></span></div>
+
+      <p class="small muted" style="margin:10px 0 0" id="estNote"></p>
+
+      <hr class="sep">
+      <div class="eyebrow">Правило, которое нельзя нарушать</div>
+      <p class="small" style="margin:8px 0 0">Количество выдаётся <strong>диапазоном и округляется вверх</strong>. Паспортный расход краски занижен относительно реального в 1,3–1,6 раза, поэтому «вам нужно 3,7 литра» — вредная точность. Ошибка в объёме дороже ошибки в цвете: промах по цвету видно на веере до покупки, промах по объёму — когда стена наполовину покрашена, а добор идёт из другого замеса. Берите одной партией.</p>
+    </div>
+
     <div class="panel pad">
       <div class="eyebrow">Откуда цены</div>
       <p class="small" style="margin:8px 0 0">Официальные фиды подключённых магазинов, прайсы и открытые цены с сайтов сетей. У каждой цены — время обновления; всё старше 48 часов помечается. Неактуальная цена убивает доверие мгновенно, поэтому лучше пометка, чем красивое число.</p>
@@ -294,10 +437,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:v
 <canvas id="cv" hidden></canvas>
 <script>
 "use strict";
-/* ═══════════════════════════════════════════════════════════════
-   ЦВЕТОВАЯ МАТЕМАТИКА — настоящая, не декоративная.
-   sRGB → линейный RGB → XYZ (D65) → CIE L*a*b*, разница по CIEDE2000.
-   ═══════════════════════════════════════════════════════════════ */
+
 var D65 = [0.95047, 1.00000, 1.08883];
 
 function srgbToLin(c){ c = c/255; return c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
@@ -330,7 +470,6 @@ function rgbToHex(r,g,b){ return '#' + [r,g,b].map(function(v){ return ('0'+v.to
 function hexToLab(h){ var p = hexToRgb(h); var x = linRgbToXyz(srgbToLin(p[0]), srgbToLin(p[1]), srgbToLin(p[2])); return xyzToLab(x[0],x[1],x[2]); }
 function labToHex(L,a,b){ var x = labToXyz(L,a,b); var r = xyzToLinRgb(x[0],x[1],x[2]); return rgbToHex(linToSrgb(r[0]), linToSrgb(r[1]), linToSrgb(r[2])); }
 
-/* CIEDE2000 — с поправками на светлоту, насыщенность, оттенок и членом RT для синей области */
 function deltaE2000(l1, l2){
   var L1=l1[0], a1=l1[1], b1=l1[2], L2=l2[0], a2=l2[1], b2=l2[2];
   var rad = Math.PI/180, deg = 180/Math.PI;
@@ -369,9 +508,6 @@ function deltaE2000(l1, l2){
          + RT*(dCp/SC)*(dHp/SH));
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ДЕМОНСТРАЦИОННЫЕ ДАННЫЕ. Бренды, цвета, магазины — вымышленные.
-   ═══════════════════════════════════════════════════════════════ */
 var BRANDS = {
   'Колорика':  { owner:'ГК «Колорика»',       country:'Россия',   plant:'Ярославль',        perL:780,  cover:9,  line:'Интерьерная матовая',   base:'база A' },
   'Нордфарб':  { owner:'Nordfarb Group Oy',   country:'Финляндия',plant:'Всеволожск, РФ',   perL:1240, cover:10, line:'Premium Interior 7',    base:'база A' },
@@ -426,9 +562,6 @@ function priceOf(brand, shop, vol){
 }
 function money(v){ return v.toLocaleString('ru-RU') + ' ₽'; }
 
-/* ═══════════════════════════════════════════════════════════════
-   ПОДПИСИ ПО ПОРОГАМ ΔE — те же, что в техблоке
-   ═══════════════════════════════════════════════════════════════ */
 function verdict(de){
   if (de < 1.0)  return { t:'Совпадение',     c:'v-ok',   s:'var(--ok)',   n:'глазом не отличить' };
   if (de < 2.0)  return { t:'Почти совпадает',c:'v-near', s:'var(--near)', n:'заметно, только если положить рядом' };
@@ -438,16 +571,12 @@ function verdict(de){
 </script>
 <script>
 "use strict";
-/* ═══════════════════════════════════════════════════════════════
-   ЗАМЕР: захват кадра, отсев бликов и теней, калибровка по белому
-   ═══════════════════════════════════════════════════════════════ */
+
 var cv = document.getElementById('cv'), ctx = cv.getContext('2d', { willReadFrequently:true });
 var video = document.getElementById('video');
 var frames = [];
 var stream = null;
 
-/* Берём центральное окно кадра, отбрасываем пересветы, провалы и хвосты
-   распределения — так уходят блик, микротень и фактура поверхности. */
 function sampleWindow(w, h){
   var side = Math.round(Math.min(w, h) * 0.38);
   var x0 = Math.round((w - side)/2), y0 = Math.round((h - side)/2);
@@ -467,7 +596,6 @@ function sampleWindow(w, h){
   return n ? [sr/n, sg/n, sb/n] : null;
 }
 
-/* Белая карта: самые светлые 2 % кадра. Даёт цвет источника света. */
 function whiteRef(w, h){
   var d = ctx.getImageData(0, 0, w, h).data;
   var px = [];
@@ -485,7 +613,6 @@ function whiteRef(w, h){
   return [sr/take, sg/take, sb/take];
 }
 
-/* Диагональная поправка фон Криза: убираем цвет лампы, приводим к D65 */
 function toLabCalibrated(linRgb, wLin){
   var xyz = linRgbToXyz(linRgb[0], linRgb[1], linRgb[2]);
   if (wLin){
@@ -535,7 +662,6 @@ function renderFrames(){
                  'Кадров: ' + good + '. Можно подбирать';
 }
 
-/* ── Камера ── */
 document.getElementById('btnCam').addEventListener('click', function(){
   if (stream){ stopCam(); return; }
   navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1280 } }, audio:false })
@@ -570,7 +696,6 @@ document.getElementById('btnShot').addEventListener('click', function(){
   grabFrom(video, w, h, SHOT_LABELS[frames.length] || ('кадр ' + (frames.length+1)));
 });
 
-/* ── Фото из галереи ── */
 document.getElementById('fileIn').addEventListener('change', function(e){
   var file = e.target.files && e.target.files[0];
   if (!file) return;
@@ -584,9 +709,6 @@ document.getElementById('fileIn').addEventListener('change', function(e){
   e.target.value = '';
 });
 
-/* ── Демо-съёмка: симуляция серии для десктопа и показа ──
-   Берём случайный цвет, «портим» его под разные лампы. Если калибровка
-   включена — искажение остаточное (как после поправки по белой карте). */
 document.getElementById('btnDemo').addEventListener('click', function(){
   frames = [];
   var src = FAN[Math.floor(Math.random()*FAN.length)];
@@ -615,9 +737,7 @@ document.getElementById('btnReset').addEventListener('click', function(){
 </script>
 <script>
 "use strict";
-/* ═══════════════════════════════════════════════════════════════
-   АГРЕГАЦИЯ СЕРИИ И ПОДБОР
-   ═══════════════════════════════════════════════════════════════ */
+
 function median(arr){
   var a = arr.slice().sort(function(x, y){ return x - y; });
   var m = Math.floor(a.length/2);
@@ -708,9 +828,6 @@ function renderResult(){
   p.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ПОКУПКА: расчёт литража, сравнение магазинов, аналоги
-   ═══════════════════════════════════════════════════════════════ */
 var picked = null, pickedDe = 0;
 
 function selectColor(c, de){
@@ -830,9 +947,471 @@ function renderBuy(){
   document.getElementById(id).addEventListener('change', renderBuy);
 });
 
-/* ═══════════════════════════════════════════════════════════════
-   ДОСТУПНОСТЬ — ГОСТ Р 52872
-   ═══════════════════════════════════════════════════════════════ */
+var LIN = new Float32Array(256);
+for (var _i = 0; _i < 256; _i++) LIN[_i] = srgbToLin(_i);
+
+function rgbToLabFast(r, g, b){
+  var R = LIN[r], G = LIN[g], B = LIN[b];
+  var X = (0.4124564*R + 0.3575761*G + 0.1804375*B) / D65[0];
+  var Y = (0.2126729*R + 0.7151522*G + 0.0721750*B) / D65[1];
+  var Z = (0.0193339*R + 0.1191920*G + 0.9503041*B) / D65[2];
+  var fx = f_lab(X), fy = f_lab(Y), fz = f_lab(Z);
+  return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)];
+}
+
+function paintMasked(baseData, outData, mask, meanL, target){
+  var d = baseData.data, o = outData.data, n = mask.length;
+  var tL = target[0], ta = target[1], tb = target[2];
+  for (var i = 0; i < n; i++){
+    if (!mask[i]) continue;
+    var p = i*4;
+    var lab = rgbToLabFast(d[p], d[p+1], d[p+2]);
+    var L = tL + (lab[0] - meanL);
+    if (L < 2) L = 2; if (L > 99) L = 99;
+    var xyz = labToXyz(L, ta, tb);
+    var lin = xyzToLinRgb(xyz[0], xyz[1], xyz[2]);
+    o[p]   = linToSrgb(lin[0]);
+    o[p+1] = linToSrgb(lin[1]);
+    o[p+2] = linToSrgb(lin[2]);
+  }
+}
+
+function meanOfMask(baseData, mask){
+  var d = baseData.data, s = 0, k = 0;
+  for (var i = 0; i < mask.length; i++){
+    if (!mask[i]) continue;
+    var p = i*4;
+    s += rgbToLabFast(d[p], d[p+1], d[p+2])[0]; k++;
+  }
+  return k ? s/k : 60;
+}
+
+var SCENES = [
+  { id:'living', name:'Гостиная', light:'окно слева' },
+  { id:'bed',    name:'Спальня',  light:'мягкий свет сверху' },
+  { id:'kitchen',name:'Кухня',    light:'лампа справа' }
+];
+var sceneCv = document.getElementById('sceneCv');
+var sceneBase = null, sceneMask = null, sceneMeanL = 60, sceneCur = 'living';
+
+function drawScene(id){
+  var W = sceneCv.width, H = sceneCv.height;
+  var ctx = sceneCv.getContext('2d', { willReadFrequently:true });
+  var mk = document.createElement('canvas'); mk.width = W; mk.height = H;
+  var mc = mk.getContext('2d', { willReadFrequently:true });
+  mc.fillStyle = '#000'; mc.fillRect(0,0,W,H);
+
+  var floorY = Math.round(H*0.72);
+  
+  var gx = id === 'kitchen' ? W : 0;
+  var g = ctx.createLinearGradient(gx, 0, W - gx, H);
+  g.addColorStop(0, '#DCDCDA'); g.addColorStop(0.55, '#C4C4C1'); g.addColorStop(1, '#A9A9A6');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, floorY);
+  mc.fillStyle = '#FFF'; mc.fillRect(0, 0, W, floorY);
+  
+  var cg = ctx.createLinearGradient(0, 0, 0, 54);
+  cg.addColorStop(0, '#F4F4F2'); cg.addColorStop(1, '#E4E4E1');
+  ctx.fillStyle = cg; ctx.fillRect(0, 0, W, 54);
+  ctx.fillStyle = 'rgba(0,0,0,.10)'; ctx.fillRect(0, 54, W, 3);
+  mc.fillStyle = '#000'; mc.fillRect(0, 0, W, 57);
+
+  
+  var lx = id === 'kitchen' ? W*0.82 : (id === 'bed' ? W*0.5 : W*0.16);
+  var ly = id === 'bed' ? H*0.06 : H*0.34;
+  var rg = ctx.createRadialGradient(lx, ly, 10, lx, ly, W*0.62);
+  rg.addColorStop(0, 'rgba(255,255,255,0.55)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = rg; ctx.fillRect(0, 57, W, floorY - 57);
+
+  
+  var img = ctx.getImageData(0, 57, W, floorY - 57), dd = img.data;
+  for (var i = 0; i < dd.length; i += 4){
+    var nse = (Math.random() - 0.5) * 9;
+    dd[i] += nse; dd[i+1] += nse; dd[i+2] += nse;
+  }
+  ctx.putImageData(img, 0, 57);
+
+  
+  var fg = ctx.createLinearGradient(0, floorY, 0, H);
+  fg.addColorStop(0, '#8A6A4B'); fg.addColorStop(1, '#6B5238');
+  ctx.fillStyle = fg; ctx.fillRect(0, floorY, W, H - floorY);
+  for (var x = 0; x < W; x += 62){
+    ctx.strokeStyle = 'rgba(0,0,0,.13)'; ctx.beginPath();
+    ctx.moveTo(x, floorY); ctx.lineTo(x - 30, H); ctx.stroke();
+  }
+  
+  ctx.fillStyle = '#EFEFED'; ctx.fillRect(0, floorY - 16, W, 16);
+  mc.fillStyle = '#000'; mc.fillRect(0, floorY - 16, W, H - floorY + 16);
+
+  function box(x, y, w, h, fill, stroke){
+    ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
+    if (stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h); }
+    mc.fillStyle = '#000'; mc.fillRect(x, y, w, h);
+  }
+
+  if (id === 'living'){
+    box(64, 112, 176, 196, '#F7F5EE', '#C9C4B4');           // окно
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(64, 112, 176, 196);
+    box(556, 122, 108, 138, '#2E2F33', '#4A4C50');          // картина
+    box(452, floorY - 96, 300, 96, '#4C5257');              // диван
+    box(466, floorY - 132, 272, 40, '#5B6167');             // спинка
+    box(300, floorY - 74, 78, 74, '#7A6047');               // тумба
+    box(348, floorY - 190, 26, 116, '#8B8F94');             // торшер
+  } else if (id === 'bed'){
+    box(316, 138, 248, 58, '#EDEAE2', '#CFCABC');           // панель над кроватью
+    box(288, floorY - 104, 304, 104, '#D8D2C6');            // кровать
+    box(304, floorY - 138, 128, 38, '#F2EFE7');             // подушки
+    box(448, floorY - 138, 128, 38, '#F2EFE7');
+    box(178, floorY - 66, 72, 66, '#6E5843');               // тумбочки
+    box(630, floorY - 66, 72, 66, '#6E5843');
+  } else {
+    box(592, 116, 208, 176, '#F6F4EC', '#C9C4B4');          // окно справа
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(592, 116, 208, 176);
+    box(96, 132, 252, 84, '#EDEBE4', '#CFCBBE');            // верхние шкафы
+    box(96, floorY - 112, 340, 112, '#5E6A70');             // гарнитур
+    box(96, floorY - 128, 340, 18, '#33383C');              // столешница
+  }
+
+  
+  var sh = ctx.createLinearGradient(0, floorY - 90, 0, floorY - 16);
+  sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.16)');
+  ctx.fillStyle = sh; ctx.fillRect(0, floorY - 90, W, 74);
+
+  sceneBase = ctx.getImageData(0, 0, W, H);
+  var md = mc.getImageData(0, 0, W, H).data;
+  sceneMask = new Uint8Array(W*H);
+  for (var k = 0; k < sceneMask.length; k++) sceneMask[k] = md[k*4] > 128 ? 1 : 0;
+  sceneMeanL = meanOfMask(sceneBase, sceneMask);
+}
+
+function renderScene(){
+  if (!sceneBase) return;
+  var ctx = sceneCv.getContext('2d', { willReadFrequently:true });
+  var out = ctx.createImageData(sceneBase);
+  out.data.set(sceneBase.data);
+  if (picked) paintMasked(sceneBase, out, sceneMask, sceneMeanL, picked.lab);
+  ctx.putImageData(out, 0, 0);
+}
+
+(function buildSceneList(){
+  var box = document.getElementById('sceneList');
+  SCENES.forEach(function(s){
+    var b = document.createElement('button');
+    b.className = 'scene'; b.type = 'button';
+    b.setAttribute('aria-pressed', s.id === sceneCur ? 'true' : 'false');
+    b.innerHTML = s.name + ' <span class="muted small">· ' + s.light + '</span>';
+    b.addEventListener('click', function(){
+      sceneCur = s.id;
+      Array.prototype.forEach.call(box.children, function(el){ el.setAttribute('aria-pressed','false'); });
+      b.setAttribute('aria-pressed','true');
+      drawScene(sceneCur); renderScene();
+    });
+    box.appendChild(b);
+  });
+})();
+
+var photoCv = document.getElementById('photoCv');
+var phBase = null, phMask = null, phL = null, phA = null, phB = null, phMeanL = 60;
+var phMode = 'fill', phUndo = [];
+
+function setMode(m){
+  phMode = m;
+  document.getElementById('vizModeFill').setAttribute('aria-pressed', m === 'fill' ? 'true' : 'false');
+  document.getElementById('vizModeAdd').setAttribute('aria-pressed', m === 'add' ? 'true' : 'false');
+  document.getElementById('vizModeDel').setAttribute('aria-pressed', m === 'del' ? 'true' : 'false');
+}
+['fill','add','del'].forEach(function(m){
+  document.getElementById('vizMode' + m.charAt(0).toUpperCase() + m.slice(1)).addEventListener('click', function(){ setMode(m); });
+});
+
+function loadPhoto(file){
+  var fr = new FileReader();
+  fr.onload = function(){
+    var im = new Image();
+    im.onload = function(){
+      var W = 880, H = Math.round(W * im.height / im.width);
+      if (H > 620){ H = 620; W = Math.round(H * im.width / im.height); }
+      photoCv.width = W; photoCv.height = H;
+      var ctx = photoCv.getContext('2d', { willReadFrequently:true });
+      ctx.drawImage(im, 0, 0, W, H);
+      phBase = ctx.getImageData(0, 0, W, H);
+      var n = W*H, d = phBase.data;
+      phL = new Float32Array(n); phA = new Float32Array(n); phB = new Float32Array(n);
+      for (var i = 0; i < n; i++){
+        var lab = rgbToLabFast(d[i*4], d[i*4+1], d[i*4+2]);
+        phL[i] = lab[0]; phA[i] = lab[1]; phB[i] = lab[2];
+      }
+      phMask = new Uint8Array(n); phUndo = [];
+      document.getElementById('vizEmpty').hidden = true;
+      renderPhoto();
+    };
+    im.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+document.getElementById('vizFile').addEventListener('change', function(e){
+  if (e.target.files && e.target.files[0]) loadPhoto(e.target.files[0]);
+});
+
+function pushUndo(){
+  if (!phMask) return;
+  phUndo.push(phMask.slice(0));
+  if (phUndo.length > 8) phUndo.shift();
+}
+
+function floodFill(sx, sy, tol){
+  var W = photoCv.width, H = photoCv.height;
+  var s = sy*W + sx, t2 = tol*tol;
+  var L0 = phL[s], a0 = phA[s], b0 = phB[s];
+  var seen = new Uint8Array(W*H), stack = [s];
+  seen[s] = 1;
+  while (stack.length){
+    var i = stack.pop();
+    phMask[i] = 1;
+    var x = i % W, y = (i - x) / W;
+    var nb = [ x > 0 ? i-1 : -1, x < W-1 ? i+1 : -1, y > 0 ? i-W : -1, y < H-1 ? i+W : -1 ];
+    for (var k = 0; k < 4; k++){
+      var j = nb[k];
+      if (j < 0 || seen[j]) continue;
+      var dL = phL[j]-L0, da = phA[j]-a0, db = phB[j]-b0;
+      if (dL*dL + da*da + db*db <= t2){ seen[j] = 1; stack.push(j); }
+    }
+  }
+}
+
+function brushAt(cx, cy, r, on){
+  var W = photoCv.width, H = photoCv.height, r2 = r*r;
+  for (var y = Math.max(0, cy-r); y <= Math.min(H-1, cy+r); y++){
+    for (var x = Math.max(0, cx-r); x <= Math.min(W-1, cx+r); x++){
+      var dx = x-cx, dy = y-cy;
+      if (dx*dx + dy*dy <= r2) phMask[y*W + x] = on;
+    }
+  }
+}
+
+function renderPhoto(){
+  if (!phBase) return;
+  var ctx = photoCv.getContext('2d', { willReadFrequently:true });
+  var out = ctx.createImageData(phBase);
+  out.data.set(phBase.data);
+  if (document.getElementById('vizMaskView').checked){
+    var o = out.data;
+    for (var i = 0; i < phMask.length; i++){
+      if (!phMask[i]) continue;
+      var p = i*4;
+      o[p] = Math.round(o[p]*0.35 + 27*0.65);
+      o[p+1] = Math.round(o[p+1]*0.35 + 94*0.65);
+      o[p+2] = Math.round(o[p+2]*0.35 + 140*0.65);
+    }
+  } else if (picked){
+    phMeanL = meanOfMask(phBase, phMask);
+    paintMasked(phBase, out, phMask, phMeanL, picked.lab);
+  }
+  ctx.putImageData(out, 0, 0);
+}
+
+function canvasXY(ev){
+  var r = photoCv.getBoundingClientRect();
+  return { x: Math.round((ev.clientX - r.left) * photoCv.width / r.width),
+           y: Math.round((ev.clientY - r.top)  * photoCv.height / r.height) };
+}
+var drawing = false;
+photoCv.addEventListener('pointerdown', function(ev){
+  if (!phBase) return;
+  var p = canvasXY(ev);
+  if (p.x < 0 || p.y < 0 || p.x >= photoCv.width || p.y >= photoCv.height) return;
+  pushUndo();
+  if (phMode === 'fill'){
+    floodFill(p.x, p.y, parseInt(document.getElementById('vizTol').value, 10));
+    renderPhoto();
+  } else {
+    drawing = true; photoCv.setPointerCapture(ev.pointerId);
+    brushAt(p.x, p.y, parseInt(document.getElementById('vizBrush').value, 10)/2, phMode === 'add' ? 1 : 0);
+    renderPhoto();
+  }
+});
+photoCv.addEventListener('pointermove', function(ev){
+  if (!drawing) return;
+  var p = canvasXY(ev);
+  brushAt(p.x, p.y, parseInt(document.getElementById('vizBrush').value, 10)/2, phMode === 'add' ? 1 : 0);
+  renderPhoto();
+});
+photoCv.addEventListener('pointerup', function(){ drawing = false; });
+document.getElementById('vizUndo').addEventListener('click', function(){
+  if (phUndo.length){ phMask = phUndo.pop(); renderPhoto(); }
+});
+document.getElementById('vizClear').addEventListener('click', function(){
+  if (phMask){ pushUndo(); phMask.fill(0); renderPhoto(); }
+});
+document.getElementById('vizMaskView').addEventListener('change', renderPhoto);
+document.getElementById('vizTol').addEventListener('input', function(e){
+  document.getElementById('tolVal').textContent = e.target.value;
+});
+document.getElementById('vizBrush').addEventListener('input', function(e){
+  document.getElementById('brushVal').textContent = e.target.value;
+});
+
+function vizTab(which){
+  var sc = which === 'scenes';
+  document.getElementById('tabScenes').setAttribute('aria-selected', sc ? 'true' : 'false');
+  document.getElementById('tabPhoto').setAttribute('aria-selected', sc ? 'false' : 'true');
+  document.getElementById('vizScenes').hidden = !sc;
+  document.getElementById('vizPhoto').hidden = sc;
+}
+document.getElementById('tabScenes').addEventListener('click', function(){ vizTab('scenes'); });
+document.getElementById('tabPhoto').addEventListener('click', function(){ vizTab('photo'); });
+
+var _selectColor = selectColor;
+selectColor = function(c, de){
+  _selectColor(c, de);
+  document.getElementById('vizPanel').hidden = false;
+  document.getElementById('vizTrueSw').style.background = c.hex;
+  if (!sceneBase) drawScene(sceneCur);
+  renderScene();
+  renderPhoto();
+  renderEstimate();
+};
+
+var DOOR_A = 0.9 * 2.1, WIN_A = 1.4 * 1.3;
+var PACK = {
+  primer:   { name:'Грунтовка глубокого проникновения', pack:'канистра 10 л', size:10,   price:1750, partner:false,
+              src:'0,1–0,2 л/м²; зависит от впитываемости основания' },
+  paint:    { name:'Краска',                            pack:'ведро 9 л',    size:9,    price:4900, partner:true,
+              src:'паспортный расход ÷ 1,3–1,6 — реальный всегда выше' },
+  wtile:    { name:'Плитка настенная 30×60',            pack:'упак. 1,44 м²',size:1.44, price:1380, partner:false,
+              src:'запас 5–10 % прямая, 10–15 % диагональ; одна партия' },
+  ftile:    { name:'Керамогранит 60×60',                pack:'упак. 1,44 м²',size:1.44, price:1690, partner:false,
+              src:'запас 5–10 % прямая, 10–15 % диагональ; одна партия' },
+  glue:     { name:'Клей плиточный',                    pack:'мешок 25 кг',  size:25,   price:640,  partner:false,
+              src:'3–5 кг/м² при гребёнке 6–8 мм; при 10 мм — 5–7 кг/м²' },
+  grout:    { name:'Затирка для швов',                  pack:'ведро 2 кг',   size:2,    price:690,  partner:false,
+              src:'(A+B)/(A×B) × шов × толщина × ρ, ρ 1,6–1,8; шов 2 мм, формат свой у стены и пола' },
+  laminate: { name:'Ламинат 33 класс',                  pack:'пачка 2,13 м²',size:2.13, price:1490, partner:false,
+              src:'запас 5 % прямая, 10 % диагональ, 15 % ёлочка' },
+  underlay: { name:'Подложка 3 мм',                     pack:'рулон 10 м²',  size:10,   price:780,  partner:false,
+              src:'площадь пола + 5 %' },
+  skirt:    { name:'Плинтус напольный',                 pack:'планка 2,5 м', size:2.5,  price:430,  partner:false,
+              src:'периметр минус проёмы дверей' },
+  paper:    { name:'Обои флизелиновые',                 pack:'рулон 10,05×0,53 м', size:1, price:2100, partner:false,
+              src:'полос на рулон = 10,05 ÷ (высота + 0,1); плюс рулон запаса' }
+};
+
+function fmtRange(lo, hi, unit){
+  var f = function(v){ return (v >= 10 ? v.toFixed(0) : v.toFixed(1)).replace('.', ','); };
+  return (Math.abs(hi - lo) < 0.05 ? f(hi) : f(lo) + '–' + f(hi)) + ' ' + unit;
+}
+
+function renderEstimate(){
+  var L = parseFloat(document.getElementById('rL').value) || 0;
+  var W = parseFloat(document.getElementById('rW').value) || 0;
+  var H = parseFloat(document.getElementById('rH').value) || 0;
+  var nd = parseInt(document.getElementById('rD').value, 10) || 0;
+  var nw = parseInt(document.getElementById('rWin').value, 10) || 0;
+
+  var sFloor = L*W, per = 2*(L+W);
+  var sWall = Math.max(0, per*H - nd*DOOR_A - nw*WIN_A);
+  var sCeil = sFloor;
+  var skirtLen = Math.max(0, per - nd*0.9);
+
+  document.getElementById('geoLine').innerHTML =
+    'Пол <strong>' + sFloor.toFixed(1).replace('.',',') + ' м²</strong> · периметр ' +
+    per.toFixed(1).replace('.',',') + ' м · стены за вычетом ' + nd + ' дв. и ' + nw + ' ок. — <strong>' +
+    sWall.toFixed(1).replace('.',',') + ' м²</strong> · потолок ' + sCeil.toFixed(1).replace('.',',') + ' м²';
+
+  var wall = document.getElementById('sWall').value;
+  var floor = document.getElementById('sFloor').value;
+  var ceil = document.getElementById('sCeil').value;
+  var pat = document.getElementById('sPattern').value;
+  var coats = parseInt(document.getElementById('sWallCoats').value, 10) || 2;
+  var primer = document.getElementById('sPrimer').checked;
+  var skirt = document.getElementById('sSkirt').checked;
+  var cover = picked ? BRANDS[picked.brand].cover : 10;
+
+  var items = [];
+  function add(key, lo, hi, unit, label, srcExtra){
+    var pk = PACK[key];
+    if (hi <= 0) return;
+    var packs = Math.ceil(hi / pk.size);
+    items.push({ name: label || pk.name, qty: fmtRange(lo, hi, unit), packs: packs, pack: pk.pack,
+                 sum: packs * pk.price, price: pk.price, partner: pk.partner,
+                 src: (srcExtra ? srcExtra + '; ' : '') + pk.src });
+  }
+
+  var tileArea = 0, groutLo = 0, groutHi = 0;
+  function grout(area, A, B, seam, thick){
+    var g = (A+B)/(A*B) * seam * thick;
+    groutLo += area*g*1.6; groutHi += area*g*1.8;
+  }
+  if (primer && (wall === 'paint' || wall === 'wallpaper')) add('primer', sWall*0.1, sWall*0.2, 'л');
+
+  if (wall === 'paint'){
+    var lo = sWall*coats/(cover/1.3), hi = sWall*coats/(cover/1.6);
+    add('paint', lo, hi, 'л', 'Краска стен' + (picked ? ' · ' + picked.name : ''),
+        'паспорт ' + cover + ' м²/л, ' + coats + ' сл.');
+  } else if (wall === 'tile'){
+    var k = pat === 'straight' ? [1.05, 1.10] : [1.10, 1.15];
+    add('wtile', sWall*k[0], sWall*k[1], 'м²'); tileArea += sWall*k[1];
+    grout(sWall*k[1], 300, 600, 2, 8);
+  } else if (wall === 'wallpaper'){
+    var strips = Math.ceil(per / 0.53);
+    var perRoll = Math.max(1, Math.floor(10.05 / (H + 0.1)));
+    var rolls = Math.ceil(strips / perRoll) + 1;
+    items.push({ name:'Обои флизелиновые', qty: rolls + ' рул.', packs: rolls, pack: PACK.paper.pack,
+                 sum: rolls*PACK.paper.price, price: PACK.paper.price, partner:false,
+                 src: strips + ' полос ÷ ' + perRoll + ' на рулон + 1 запас; ' + PACK.paper.src });
+  }
+
+  if (floor === 'laminate'){
+    var kk = pat === 'straight' ? 1.05 : (pat === 'diagonal' ? 1.10 : 1.15);
+    add('laminate', sFloor*1.03, sFloor*kk, 'м²', null, 'схема: ' + (pat === 'straight' ? 'прямая' : pat === 'diagonal' ? 'диагональ' : 'ёлочка'));
+    add('underlay', sFloor, sFloor*1.05, 'м²');
+  } else if (floor === 'tile'){
+    var k2 = pat === 'straight' ? [1.05, 1.10] : [1.10, 1.15];
+    add('ftile', sFloor*k2[0], sFloor*k2[1], 'м²'); tileArea += sFloor*k2[1];
+    grout(sFloor*k2[1], 600, 600, 2, 9);
+  }
+
+  if (tileArea > 0){
+    add('glue', tileArea*3, tileArea*5, 'кг');
+    add('grout', groutLo, groutHi, 'кг');
+  }
+  if (skirt && floor !== 'none') add('skirt', skirtLen, skirtLen*1.05, 'м');
+  if (ceil === 'paint'){
+    var clo = sCeil*2/(cover/1.3), chi = sCeil*2/(cover/1.6);
+    add('paint', clo, chi, 'л', 'Краска потолка', 'паспорт ' + cover + ' м²/л, 2 сл.');
+  }
+
+  var tb = document.getElementById('estRows');
+  tb.innerHTML = '';
+  var total = 0;
+  items.forEach(function(it){
+    total += it.sum;
+    var tr = document.createElement('tr');
+    if (it.partner) tr.className = 'own';
+    tr.innerHTML =
+      '<td>' + it.name + (it.partner ? '' : '') + '</td>' +
+      '<td class="n">' + it.qty + '</td>' +
+      '<td class="n">' + it.packs + ' × <span class="small muted">' + it.pack + '</span></td>' +
+      '<td class="n">' + money(it.price) + '</td>' +
+      '<td class="n"><strong>' + money(it.sum) + '</strong></td>' +
+      '<td class="src">' + it.src + '</td>';
+    tb.appendChild(tr);
+  });
+  if (!items.length) tb.innerHTML = '<tr><td colspan="6" class="small muted">Все поверхности отмечены как «не трогаем».</td></tr>';
+  document.getElementById('estTotal').textContent = money(total);
+
+  document.getElementById('estNote').innerHTML =
+    'Количество каждой позиции — диапазон, упаковки округлены вверх. Цены демонстрационные. ' +
+    'Источник площади подписывается в смете: здесь это ручной ввод, в продукте — ещё обмер по четырём тапам (±10–15 %) ' +
+    'или по калибровочной карте (±7–10 %).';
+}
+
+['rL','rW','rH','rD','rWin','sWall','sWallCoats','sPrimer','sFloor','sPattern','sSkirt','sCeil'].forEach(function(id){
+  var el = document.getElementById(id);
+  el.addEventListener('input', renderEstimate);
+  el.addEventListener('change', renderEstimate);
+});
+renderEstimate();
+
 var root = document.documentElement;
 var a11yBtn = document.getElementById('a11yBtn'), a11y = document.getElementById('a11y');
 a11yBtn.addEventListener('click', function(){
