@@ -1,0 +1,1448 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ТК СКАРАБЕЙ — витрина, редизайн v2 (08.09.2026)</title>
+<!--
+  ПРОТОТИП. Боевой сайт tkskarabey.ru не тронут.
+  Источник требований: 00_Исходники/2026-09-08_протокол_звонок_Михаил.md, разделы 3 и 4.
+  Шрифты подключены с Google Fonts ТОЛЬКО в прототипе. На бою внешние CDN запрещены —
+  файлы Onest / Bitter / JetBrains Mono кладутся локально в public/fonts (задача Ф-4).
+  Если интернета нет, файл откроется на системных шрифтах с кириллицей — вёрстка не поедет.
+-->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&amp;family=Onest:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+/* ============================================================
+   ТОКЕНЫ. Один набор на весь проект — дубль в 07_Прототип и в
+   58_Редизайн_витрины.md. Тема прототипа зафиксирована светлой:
+   у Михаила претензия ровно к чёрному фону, и показ не должен
+   зависеть от того, включена ли на его машине тёмная тема.
+   ============================================================ */
+:root{
+  /* поверхности */
+  --bg:#F7F5F1;
+  --bg-sunk:#EFEBE3;
+  --surface:#FFFFFF;
+  /* границы: декоративные и те, что несут смысл (поля ввода, чекбоксы) */
+  --border:#E3DFD6;
+  --border-strong:#CFC9BC;
+  --border-input:#8C8578;      /* 3.66:1 к белому — минимум для контролов */
+  /* текст */
+  --ink:#17181C;               /* 16.3:1 к фону */
+  --muted:#5F6068;             /* 5.7:1 к фону, 6.3:1 к белому */
+  /* акцент */
+  --accent:#2B39A8;            /* 9.3:1 к белому */
+  --accent-hover:#1E2A85;
+  --accent-fg:#FFFFFF;
+  --accent-soft:#E7E9F7;
+  /* статусы */
+  --ok:#1F5C3D;      --ok-soft:#E2EDE7;
+  --warn:#7A4E0A;    --warn-soft:#F5EBD9;
+  --err:#8E1F1F;     --err-soft:#FBEAEA;
+  /* эталонное поле под образцы цвета — одинаковое везде, где показан цвет */
+  --plate:#F5F3EE;
+  --plate-border:#D8D3C7;
+  /* шрифты: обязательна кириллица во всех трёх */
+  --font-display:"Bitter",Georgia,"Times New Roman",serif;
+  --font-sans:"Onest",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,"Courier New",monospace;
+  /* шаг сетки 4px */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  --r-s:8px; --r-m:12px; --r-l:16px; --r-pill:999px;
+  --tap:44px;                  /* минимальная область нажатия */
+  --max:1140px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#E8E4DC;color:var(--ink);font-family:var(--font-sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+a{color:inherit}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- панель прототипа (в макет не входит) ---------- */
+.protobar{position:sticky;top:0;z-index:80;background:#17181C;color:#F7F5F1}
+.protobar .in{max-width:1400px;margin:0 auto;padding:10px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.protobar .tag{font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.pgroup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pgroup>b{font-size:14px;font-weight:500;opacity:.7}
+.pbtn{font-size:15px;line-height:1;padding:10px 14px;min-height:38px;border-radius:var(--r-pill);border:1px solid #4A4C55;background:transparent;color:#F7F5F1;cursor:pointer}
+.pbtn:hover{border-color:#F7F5F1}
+.pbtn[aria-pressed="true"],.pbtn[aria-selected="true"]{background:#F7F5F1;color:#17181C;border-color:#F7F5F1}
+.protonote{background:var(--warn-soft);color:var(--warn);font-size:15px;padding:8px 16px;text-align:center}
+
+/* ---------- рамка приложения + контейнерные запросы ---------- */
+.app{container-type:inline-size;background:var(--bg);max-width:1400px;margin:0 auto;min-height:100vh}
+body.narrow .app{width:360px;margin:16px auto;min-height:auto;border:1px solid var(--border-strong);border-radius:var(--r-l);overflow:hidden;box-shadow:0 12px 40px rgb(23 24 28/.16)}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+@container (max-width:720px){.wrap{padding:0 16px}}
+
+/* ---------- шапка магазина ---------- */
+.head{background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:20}
+.head .in{display:flex;align-items:center;gap:var(--s5);padding:12px 0}
+.logo{display:flex;flex-direction:column;line-height:1.2;text-decoration:none;flex:none}
+.logo b{font-family:var(--font-display);font-size:20px;letter-spacing:-.02em}
+.logo span{font-size:14px;color:var(--muted)}
+.nav{display:flex;gap:var(--s5);font-size:16px}
+.nav a{text-decoration:none;padding:10px 0;border-bottom:2px solid transparent;white-space:nowrap}
+.nav a:hover,.nav a[aria-current="page"]{border-bottom-color:var(--accent);color:var(--accent)}
+.head-right{margin-left:auto;display:flex;align-items:center;gap:var(--s4)}
+.phone{font-family:var(--font-mono);font-size:16px;white-space:nowrap;text-decoration:none}
+.phone small{display:block;font-family:var(--font-sans);font-size:13px;color:var(--muted)}
+@container (max-width:1000px){.nav{display:none}}
+@container (max-width:720px){.phone{display:none}.logo span{display:none}.head .in{gap:var(--s3)}}
+
+/* кнопки */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:500;min-height:var(--tap);padding:11px 22px;border-radius:var(--r-s);border:1px solid transparent;text-decoration:none;cursor:pointer;transition:background .15s,border-color .15s}
+.btn-primary{background:var(--accent);color:var(--accent-fg)}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-ghost{border-color:var(--border-input);color:var(--ink);background:var(--surface)}
+.btn-ghost:hover{border-color:var(--ink)}
+.btn-link{background:transparent;border:0;color:var(--accent);text-decoration:underline;padding:10px 4px;min-height:var(--tap)}
+.btn-sm{min-height:38px;padding:8px 14px;font-size:15px}
+.lens{width:22px;height:22px;border-radius:6px;flex:none;background:conic-gradient(from 210deg,#E24B2C,#E7A825,#3E8F5B,#2B6BD6,#7B4BC4,#E24B2C);box-shadow:inset 0 0 0 2px rgb(255 255 255/.55)}
+@container (max-width:720px){.btn-hide-narrow span.t{display:none}.btn-hide-narrow{padding:11px 14px}}
+
+/* ---------- общие секции ---------- */
+.screen{display:block}
+section{padding:var(--s7) 0}
+@container (max-width:720px){section{padding:var(--s6) 0}}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s4);margin-bottom:var(--s5)}
+.sec-head h2{font-size:30px}
+@container (max-width:720px){.sec-head h2{font-size:24px}}
+.sec-head a{font-size:16px;color:var(--accent);text-decoration:none;white-space:nowrap}
+.sec-head a:hover{text-decoration:underline}
+.eyebrow{font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:15px;color:var(--muted);margin-top:var(--s4);max-width:80ch}
+.note b{color:var(--ink);font-weight:500}
+
+/* ---------- герой ---------- */
+.hero{padding:var(--s7) 0 var(--s6)}
+.hero-grid{display:grid;gap:var(--s6);grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:start}
+@container (max-width:900px){.hero-grid{grid-template-columns:1fr;gap:var(--s5)}}
+.hero h1{font-size:46px;line-height:1.06;margin:var(--s3) 0 var(--s4)}
+@container (max-width:900px){.hero h1{font-size:32px}}
+@container (max-width:400px){.hero{padding-top:var(--s5)}.hero h1{font-size:27px}}
+.hero .lead{font-size:18px;color:var(--muted);max-width:52ch;margin-bottom:var(--s5)}
+@container (max-width:400px){.hero .lead{font-size:16px;margin-bottom:var(--s4)}}
+.cta{display:flex;flex-wrap:wrap;gap:var(--s3)}
+.facts{display:flex;flex-wrap:wrap;gap:var(--s5) var(--s6);padding-top:var(--s5);margin-top:var(--s5);border-top:1px solid var(--border)}
+.facts div{display:flex;flex-direction:column}
+.facts b{font-family:var(--font-display);font-size:26px;line-height:1.1}
+.facts span{font-size:14px;color:var(--muted)}
+
+/* ---------- оттенки: с названиями, а не голыми номерами ---------- */
+.shades{background:var(--plate);border:1px solid var(--plate-border);border-radius:var(--r-l);padding:var(--s4)}
+.shades .h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin-bottom:var(--s3)}
+.shades .h strong{font-family:var(--font-display);font-size:17px}
+.shades .h a{font-size:15px;color:var(--accent)}
+.shade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2)}
+@container (max-width:400px){.shade-grid{grid-template-columns:repeat(2,1fr)}}
+.shade{display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--plate-border);border-radius:var(--r-s);overflow:hidden;text-decoration:none;min-height:var(--tap)}
+.shade:hover{border-color:var(--accent)}
+.shade i{display:block;height:64px;box-shadow:inset 0 0 0 1px rgb(0 0 0/.08)}
+.shade .t{padding:8px 10px 10px}
+.shade b{display:block;font-size:15px;font-weight:500;line-height:1.25}
+.shade code{display:block;font-family:var(--font-mono);font-size:13px;color:var(--muted);margin-top:2px}
+.shade-wide{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--s3)}
+@container (max-width:900px){.shade-wide{grid-template-columns:repeat(3,1fr)}}
+@container (max-width:520px){.shade-wide{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- плитки типов материалов (верхний уровень = материал) ---------- */
+.mats{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s4)}
+@container (max-width:820px){.mats{grid-template-columns:1fr}}
+.mat{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.mat:hover{border-color:var(--accent);box-shadow:0 8px 24px rgb(23 24 28/.08)}
+.mat .band{height:96px;display:flex;align-items:flex-end;padding:var(--s3);gap:var(--s2)}
+.mat .band i{display:block;flex:1;height:40px;border-radius:6px;box-shadow:inset 0 0 0 1px rgb(0 0 0/.09)}
+.mat .b{padding:var(--s4) var(--s4) var(--s5);display:flex;flex-direction:column;gap:var(--s2);flex:1}
+.mat h3{font-size:22px}
+.mat h3 a{text-decoration:none}
+.mat h3 a::after{content:"";position:absolute;inset:0}
+.mat{position:relative}
+.mat p{font-size:16px;color:var(--muted)}
+.subs{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:auto;padding-top:var(--s3);position:relative;z-index:1}
+.subs a{font-size:15px;text-decoration:none;padding:8px 12px;min-height:38px;display:inline-flex;align-items:center;border-radius:var(--r-pill);background:var(--bg-sunk);color:var(--ink);border:1px solid transparent}
+.subs a:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.subs .go{background:var(--accent);color:var(--accent-fg);font-weight:500}
+.subs .go:hover{background:var(--accent-hover);color:var(--accent-fg)}
+
+/* ---------- блок сканера ---------- */
+.scanblock{background:var(--accent-soft);border-radius:var(--r-l);padding:var(--s6);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:var(--s6);align-items:center}
+@container (max-width:860px){.scanblock{grid-template-columns:1fr;padding:var(--s5)}}
+.scanblock h2{font-size:30px;margin:var(--s2) 0 var(--s3)}
+@container (max-width:720px){.scanblock h2{font-size:24px}}
+.scanblock p{color:#2E3040;margin-bottom:var(--s4);max-width:56ch}
+.steps{display:flex;flex-direction:column;gap:var(--s3);margin:0 0 var(--s5);padding:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:32px 1fr;gap:var(--s3);align-items:start;font-size:16px}
+.steps li::before{counter-increment:s;content:counter(s);width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:15px}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2)}
+.strip i{display:block;height:72px;border-radius:var(--r-s);box-shadow:inset 0 0 0 1px rgb(0 0 0/.09)}
+
+/* ---------- бренды ---------- */
+.brands{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3)}
+@container (max-width:900px){.brands{grid-template-columns:repeat(2,1fr)}}
+@container (max-width:420px){.brands{grid-template-columns:1fr}}
+.brand{display:flex;flex-direction:column;text-decoration:none;border-radius:var(--r-m);overflow:hidden;border:1px solid var(--border);background:var(--surface);transition:transform .15s,box-shadow .15s}
+.brand:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgb(23 24 28/.1)}
+.brand .plate{height:88px;display:flex;align-items:center;justify-content:center;padding:var(--s3);position:relative}
+.brand .plate b{font-family:var(--font-display);font-size:24px;letter-spacing:-.02em;color:#17181C;text-align:center;line-height:1.05}
+.brand .plate::after{content:"";position:absolute;right:8px;bottom:8px;width:28px;height:18px;border-radius:3px;border:1px dashed rgb(23 24 28/.35)}
+.brand .b{padding:var(--s3) var(--s4) var(--s4);display:flex;flex-direction:column;gap:2px}
+.brand .b span{font-size:15px;color:var(--muted)}
+.brand .b em{font-family:var(--font-mono);font-style:normal;font-size:15px;color:var(--accent)}
+
+/* ---------- каталог ---------- */
+.crumbs{font-size:15px;color:var(--muted);padding:var(--s4) 0 0}
+.crumbs a{color:var(--muted);text-decoration:none}
+.crumbs a:hover{color:var(--accent);text-decoration:underline}
+.cat-head{padding:var(--s4) 0 var(--s5)}
+.cat-head h1{font-size:34px;margin-bottom:var(--s2)}
+@container (max-width:720px){.cat-head h1{font-size:26px}}
+.cat-head .found{font-family:var(--font-mono);font-size:16px;color:var(--muted)}
+.quick{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s4)}
+.quick a{font-size:15px;text-decoration:none;padding:9px 14px;border-radius:var(--r-pill);border:1px solid var(--border-strong);background:var(--surface);min-height:38px;display:inline-flex;align-items:center}
+.quick a:hover{border-color:var(--accent);color:var(--accent)}
+.quick .lbl{font-size:15px;color:var(--muted);align-self:center;margin-right:var(--s1)}
+.cat-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:var(--s6);padding-bottom:var(--s7)}
+@container (max-width:900px){.cat-layout{grid-template-columns:1fr;gap:var(--s5)}}
+.filters{display:flex;flex-direction:column;gap:var(--s5);font-size:16px}
+.fgroup h4{font-family:var(--font-display);font-size:17px;margin:0 0 var(--s2)}
+.fgroup label{display:flex;align-items:center;gap:10px;padding:8px 0;min-height:var(--tap);cursor:pointer}
+.fgroup label:hover{color:var(--accent)}
+.fgroup input[type=checkbox]{accent-color:var(--accent);width:20px;height:20px;flex:none}
+.fgroup .n{margin-left:auto;font-family:var(--font-mono);font-size:15px;color:var(--muted)}
+.colorf{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--s2)}
+.colorf button{aspect-ratio:1;min-width:36px;min-height:36px;border-radius:50%;border:1px solid rgb(0 0 0/.22);cursor:pointer;padding:0}
+.colorf button[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:2px}
+.sortline{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3);margin-bottom:var(--s4)}
+.sortline select{font:inherit;font-size:16px;min-height:var(--tap);padding:10px 12px;border-radius:var(--r-s);border:1px solid var(--border-input);background:var(--surface);color:var(--ink)}
+.sortline .sp{margin-left:auto}
+@container (max-width:520px){.sortline .sp{margin-left:0;width:100%}.sortline select{width:100%}}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s4)}
+@container (max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}}
+@container (max-width:560px){.grid{grid-template-columns:1fr}}
+.card{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:var(--accent);box-shadow:0 8px 22px rgb(23 24 28/.09)}
+.card .art{height:148px;position:relative;background:var(--plate);border-bottom:1px solid var(--border)}
+.card .art .paint{position:absolute;inset:16px;border-radius:var(--r-s);box-shadow:inset 0 0 0 1px rgb(0 0 0/.09)}
+.card .art .can{position:absolute;right:16px;bottom:16px;width:52px;height:62px;border-radius:4px;background:linear-gradient(180deg,#FBFAF7,#E4E0D6);box-shadow:0 2px 8px rgb(0 0 0/.18);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px}
+.card .art .can i{display:block;width:34px;height:24px;border-radius:2px;box-shadow:inset 0 0 0 1px rgb(0 0 0/.1)}
+.card .b{padding:var(--s4) var(--s4) 0;display:flex;flex-direction:column;gap:6px}
+.card .bl{font-family:var(--font-mono);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card h3{font-family:var(--font-sans);font-size:16px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card h3 a{text-decoration:none}
+.card h3 a::after{content:"";position:absolute;inset:0}
+.attrs{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.attrs span{font-size:14px;padding:3px 10px;border-radius:var(--r-pill);background:var(--bg-sunk);color:var(--ink)}
+.card .f{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s3);padding:var(--s4)}
+.price{font-family:var(--font-mono);font-size:20px;font-weight:500;white-space:nowrap}
+.price small{display:block;font-family:var(--font-sans);font-size:14px;color:var(--muted);font-weight:400}
+.stock{font-size:14px;padding:4px 10px;border-radius:var(--r-pill);background:var(--warn-soft);color:var(--warn);white-space:nowrap}
+.cmp{position:relative;z-index:2;display:flex;align-items:center;gap:8px;padding:10px var(--s4);border-top:1px solid var(--border);font-size:15px;color:var(--muted);min-height:var(--tap);cursor:pointer}
+.cmp:hover{color:var(--accent)}
+.cmp input{accent-color:var(--accent);width:20px;height:20px}
+
+/* панель сравнения */
+.cmpbar{position:sticky;bottom:0;z-index:30;background:var(--ink);color:#F7F5F1;border-radius:var(--r-m);padding:var(--s3) var(--s4);display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3);margin-top:var(--s5)}
+.cmpbar .t{font-size:16px}
+.cmpbar .sw{display:flex;gap:6px}
+.cmpbar .sw i{width:28px;height:28px;border-radius:6px;box-shadow:inset 0 0 0 1px rgb(255 255 255/.3)}
+.cmpbar .btn{margin-left:auto}
+@container (max-width:560px){.cmpbar .btn{margin-left:0;width:100%}}
+
+/* пагинация */
+.pager{display:flex;gap:var(--s2);justify-content:center;margin-top:var(--s5);flex-wrap:wrap}
+.pager a{min-width:var(--tap);min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r-s);border:1px solid var(--border-strong);background:var(--surface);text-decoration:none;font-family:var(--font-mono);font-size:16px;padding:0 12px}
+.pager a[aria-current="page"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+
+/* ---------- карточка товара ---------- */
+.pdp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:var(--s6);padding:var(--s5) 0 var(--s7)}
+@container (max-width:900px){.pdp{grid-template-columns:1fr;gap:var(--s5)}}
+.pdp h1{font-size:32px;line-height:1.15;margin-bottom:var(--s3)}
+@container (max-width:720px){.pdp h1{font-size:24px}}
+.pdp .plate-big{background:var(--plate);border:1px solid var(--plate-border);border-radius:var(--r-l);height:280px;position:relative;margin-bottom:var(--s4)}
+.pdp .plate-big .paint{position:absolute;inset:24px;border-radius:var(--r-m);box-shadow:inset 0 0 0 1px rgb(0 0 0/.09)}
+.pdp .plate-big .cap{position:absolute;left:24px;bottom:24px;background:rgb(255 255 255/.9);border-radius:var(--r-s);padding:8px 12px;font-size:15px}
+.buybox{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);padding:var(--s5);display:flex;flex-direction:column;gap:var(--s4);position:sticky;top:76px}
+@container (max-width:900px){.buybox{position:static}}
+.buybox .p{font-family:var(--font-mono);font-size:32px;font-weight:500}
+.buybox .p small{display:block;font-family:var(--font-sans);font-size:15px;color:var(--muted);font-weight:400}
+.vol{display:flex;gap:var(--s2);flex-wrap:wrap}
+.vol button{min-height:var(--tap);padding:10px 16px;border-radius:var(--r-s);border:1px solid var(--border-input);background:var(--surface);cursor:pointer;font-size:16px}
+.vol button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:500}
+.tbl{width:100%;border-collapse:collapse;font-size:16px}
+.tbl th,.tbl td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.tbl th{font-weight:500;color:var(--muted);width:42%}
+.tbl tr:last-child th,.tbl tr:last-child td{border-bottom:0}
+.soft{color:var(--muted);border-bottom:1px dotted var(--border-input)}
+
+/* ---------- сравнение ---------- */
+.cmp-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r-m);background:var(--surface)}
+.cmp-tbl{border-collapse:collapse;min-width:100%;font-size:16px}
+.cmp-tbl th,.cmp-tbl td{padding:14px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:left;vertical-align:top;min-width:190px}
+.cmp-tbl thead th{position:sticky;top:0;background:var(--surface);z-index:2}
+.cmp-tbl th.rowh{position:sticky;left:0;background:var(--bg-sunk);z-index:1;min-width:170px;font-weight:500;color:var(--ink)}
+.cmp-tbl thead th.rowh{z-index:3}
+.cmp-tbl .win{background:var(--ok-soft);color:var(--ok);font-weight:500}
+.cmp-head{display:flex;flex-direction:column;gap:8px}
+.cmp-head i{display:block;height:48px;border-radius:var(--r-s);box-shadow:inset 0 0 0 1px rgb(0 0 0/.09)}
+.cmp-head b{font-size:16px;line-height:1.3}
+.cmp-head span{font-size:14px;color:var(--muted)}
+
+/* ---------- сканер ---------- */
+.scan{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:var(--s6);padding:var(--s5) 0 var(--s7)}
+@container (max-width:900px){.scan{grid-template-columns:1fr}}
+.viewport{background:var(--plate);border:1px solid var(--plate-border);border-radius:var(--r-l);min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s4);padding:var(--s6);text-align:center}
+.viewport .icon{width:72px;height:72px;border-radius:var(--r-m);background:conic-gradient(from 210deg,#E24B2C,#E7A825,#3E8F5B,#2B6BD6,#7B4BC4,#E24B2C);box-shadow:inset 0 0 0 4px rgb(255 255 255/.6)}
+.match{display:flex;gap:var(--s4);align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);padding:var(--s4)}
+.match i{width:88px;height:88px;border-radius:var(--r-s);flex:none;box-shadow:inset 0 0 0 1px rgb(0 0 0/.09)}
+.match b{display:block;font-size:20px;font-family:var(--font-display)}
+.match span{font-size:15px;color:var(--muted)}
+.match .d{font-family:var(--font-mono);font-size:15px;color:var(--ok);margin-top:4px;display:block}
+
+/* ---------- служебные состояния ---------- */
+.skel{background:linear-gradient(90deg,#EFEBE3 25%,#F7F5F1 37%,#EFEBE3 63%);background-size:400% 100%;animation:sh 1.3s ease-in-out infinite;border-radius:var(--r-s)}
+@keyframes sh{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+.skel-card{border:1px solid var(--border);border-radius:var(--r-m);background:var(--surface);padding:0 0 var(--s4);overflow:hidden}
+.skel-card .a{height:148px}
+.skel-card .l{height:14px;margin:var(--s3) var(--s4) 0}
+.state-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);padding:var(--s6);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--s3)}
+.state-box h3{font-size:22px}
+.state-box p{color:var(--muted);max-width:56ch}
+.state-box .actions{display:flex;flex-wrap:wrap;gap:var(--s3);justify-content:center;margin-top:var(--s2)}
+.state-box.err{border-color:var(--err);background:var(--err-soft)}
+.state-box.err h3{color:var(--err)}
+.badge-emoji{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:24px;background:var(--accent-soft);color:var(--accent)}
+.state-box.err .badge-emoji{background:#F7D9D9;color:var(--err)}
+
+/* ---------- «что изменилось» ---------- */
+.changes{background:var(--bg-sunk);border-top:1px solid var(--border)}
+.chlist{display:grid;grid-template-columns:repeat(2,1fr);gap:0 var(--s6)}
+@container (max-width:820px){.chlist{grid-template-columns:1fr}}
+.chlist>div{display:grid;grid-template-columns:26px 1fr;gap:var(--s3);padding:var(--s4) 0;border-bottom:1px solid var(--border-strong)}
+.chlist b{font-family:var(--font-sans);font-size:16px;font-weight:600;display:block;margin-bottom:4px}
+.chlist p{font-size:15px;color:var(--muted)}
+.mark{width:26px;height:26px;border-radius:7px;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:15px}
+.mark.open{background:var(--warn-soft);color:var(--warn);box-shadow:inset 0 0 0 1px currentColor}
+.mark.new{background:var(--ok);color:#fff}
+.footnote{padding:var(--s5) 0 var(--s7);font-size:15px;color:var(--muted)}
+.footnote a{color:var(--accent)}
+
+
+/* Подстраховка для браузеров без @container и для настоящего телефона:
+   те же переносы, но по ширине окна. На десктопе не мешают. */
+@media (max-width:1000px){
+  .nav{display:none}
+  .grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:900px){
+  .hero-grid,.cat-layout,.pdp,.scan{grid-template-columns:1fr}
+  .brands{grid-template-columns:repeat(2,1fr)}
+  .shade-wide{grid-template-columns:repeat(3,1fr)}
+  .buybox{position:static}
+  .hero h1{font-size:32px}
+}
+@media (max-width:860px){.scanblock{grid-template-columns:1fr;padding:24px}}
+@media (max-width:820px){.mats,.chlist{grid-template-columns:1fr}}
+@media (max-width:720px){
+  .wrap{padding:0 16px}
+  .phone{display:none}
+  .logo span{display:none}
+  .sec-head h2{font-size:24px}
+  .cat-head h1{font-size:26px}
+  .pdp h1{font-size:24px}
+}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+@media (max-width:520px){.shade-wide{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){
+  .brands{grid-template-columns:1fr}
+  .shade-grid{grid-template-columns:repeat(2,1fr)}
+  .hero h1{font-size:27px}
+  .hero .lead{font-size:16px}
+}
+
+/* подвал магазина */
+.foot{background:var(--surface);border-top:1px solid var(--border);padding:var(--s5) 0;font-size:15px;color:var(--muted)}
+.foot .in{display:flex;flex-wrap:wrap;gap:var(--s5)}
+.foot a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ================= ПАНЕЛЬ ПРОТОТИПА ================= -->
+<div class="protobar">
+  <div class="in">
+    <span class="tag">Прототип v2 · прод не тронут</span>
+    <div class="pgroup" role="tablist" aria-label="Экраны">
+      <button class="pbtn" role="tab" data-screen="home" aria-selected="true">Главная</button>
+      <button class="pbtn" role="tab" data-screen="catalog" aria-selected="false">Каталог</button>
+      <button class="pbtn" role="tab" data-screen="product" aria-selected="false">Карточка</button>
+      <button class="pbtn" role="tab" data-screen="compare" aria-selected="false">Сравнение</button>
+      <button class="pbtn" role="tab" data-screen="scan" aria-selected="false">Подобрать цвет</button>
+    </div>
+    <div class="pgroup" aria-label="Состояние экрана">
+      <b>Состояние:</b>
+      <button class="pbtn" data-state="norm" aria-pressed="true">Норма</button>
+      <button class="pbtn" data-state="empty" aria-pressed="false">Пусто</button>
+      <button class="pbtn" data-state="loading" aria-pressed="false">Загрузка</button>
+      <button class="pbtn" data-state="error" aria-pressed="false">Ошибка</button>
+      <button class="pbtn" data-state="many" aria-pressed="false">Много данных</button>
+    </div>
+    <div class="pgroup" aria-label="Ширина">
+      <b>Ширина:</b>
+      <button class="pbtn" data-width="wide" aria-pressed="true">Десктоп</button>
+      <button class="pbtn" data-width="narrow" aria-pressed="false">360 px</button>
+    </div>
+  </div>
+</div>
+<p class="protonote" id="fallback-note" hidden>У этого экрана выбранное состояние совпадает с нормой — показана норма.</p>
+
+<div class="app">
+
+<!-- ================= ШАПКА ================= -->
+<header class="head">
+  <div class="wrap in">
+    <a class="logo" href="#" data-go="home"><b>ТК СКАРАБЕЙ</b><span>Москва, пос. Коммунарка · краски и колеровка</span></a>
+    <nav class="nav" aria-label="Разделы каталога">
+      <a href="#" data-go="catalog">Краски</a>
+      <a href="#" data-go="catalog">Пропитки для дерева</a>
+      <a href="#" data-go="catalog">Штукатурки</a>
+      <a href="#" data-go="scan">Колеровка</a>
+    </nav>
+    <div class="head-right">
+      <a class="phone" href="tel:+79268409951">+7 (926) 840-99-51<small>Менеджер по продаже</small></a>
+      <a class="btn btn-primary btn-hide-narrow" href="#" data-go="scan"><span class="lens" aria-hidden="true"></span><span class="t">Подобрать цвет</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- ======================================================================
+     ЭКРАН 1 — ГЛАВНАЯ
+     Главное действие: «Подобрать цвет по фото». Одно, видно без прокрутки.
+     Верхний уровень навигации = тип материала (протокол, раздел 3).
+     ====================================================================== -->
+<main class="screen" data-screen="home">
+
+  <div class="wrap hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Коммунарка · ТОГК «Славянский мир», ряд З</span>
+        <h1>Краски, пропитки, штукатурки и колеровка — в одном месте</h1>
+        <p class="lead">Весь прайс магазина на сайте. Колеруем по вееру и по вашему образцу. Сфотографируйте стену — подберём оттенок, назовём краску и посчитаем, сколько банок нужно.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#" data-go="scan"><span class="lens" aria-hidden="true"></span>Подобрать цвет по фото</a>
+          <a class="btn btn-ghost" href="#" data-go="catalog">Открыть каталог</a>
+        </div>
+        <div class="facts">
+          <div><b class="mono">3 811</b><span>позиций в прайсе</span></div>
+          <div><b class="mono">31</b><span>бренд на точке</span></div>
+          <div><b>своя</b><span>колеровка, 9:00–17:00</span></div>
+        </div>
+      </div>
+
+      <!-- Антиреференс Dufa: оттенки не внизу и не голыми номерами.
+           У каждого — русское название, код и подпись, чем он хорош. -->
+      <div class="shades">
+        <div class="h"><strong>Оттенки, которые чаще всего колеруем</strong><a href="#" data-go="catalog">Все оттенки →</a></div>
+        <div class="shade-grid">
+          <a class="shade" href="#" data-go="catalog"><i style="background:#EFE6D6"></i><span class="t"><b>Тёплый жемчуг</b><code>RV-1002 · перламутр</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#E9E1CE"></i><span class="t"><b>Топлёное молоко</b><code>CL-1002 · сатин</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#B4BFA6"></i><span class="t"><b>Полынный шёлк</b><code>RV-5130 · перламутр</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#BFD3E0"></i><span class="t"><b>Морозное утро</b><code>RV-6120 · перламутр</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#B5694D"></i><span class="t"><b>Терракота</b><code>KR-7410 · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#2E507F"></i><span class="t"><b>Кобальт известь</b><code>CL-6840 · сатин</code></span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-group="home">
+
+    <!-- === НОРМА и МНОГО ДАННЫХ === -->
+    <div data-st="norm many">
+
+      <section class="wrap">
+        <div class="sec-head">
+          <h2>Что вам нужно</h2>
+          <a href="#" data-go="catalog">Весь каталог →</a>
+        </div>
+        <div class="mats">
+
+          <article class="mat">
+            <div class="band" style="background:linear-gradient(115deg,#F4F1EA,#E4E9EC 55%,#CBD5DA)">
+              <i style="background:#FAF8F3"></i><i style="background:#E3E7E4"></i><i style="background:#B4BFA6"></i><i style="background:#2E507F"></i>
+            </div>
+            <div class="b">
+              <h3><a href="#" data-go="catalog">Краски</a></h3>
+              <p>Для стен и потолков, фасада, пола и радиаторов. Под колеровку — базы А и С.</p>
+              <div class="subs">
+                <a href="#" data-go="catalog">На водной основе</a>
+                <a href="#" data-go="catalog">Масляные и алкидные эмали</a>
+                <a href="#" data-go="catalog">По металлу</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="mat">
+            <div class="band" style="background:linear-gradient(115deg,#E8D3B4,#C08A54 55%,#7A5230)">
+              <i style="background:#E5C9A2"></i><i style="background:#C08A54"></i><i style="background:#8E6A44"></i><i style="background:#5A3E28"></i>
+            </div>
+            <div class="b">
+              <h3><a href="#" data-go="catalog">Пропитки и составы для дерева</a></h3>
+              <p>Защита бруса, вагонки, террас и заборов: от антисептика до масла с воском.</p>
+              <div class="subs">
+                <a href="#" data-go="catalog">Антисептики</a>
+                <a href="#" data-go="catalog">Лазури и лессирующие</a>
+                <a href="#" data-go="catalog">Масла и воски</a>
+                <a href="#" data-go="catalog">Морилки под колеровку</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="mat">
+            <div class="band" style="background:linear-gradient(115deg,#F1EADC,#DACFB6 50%,#B0A288)">
+              <i style="background:#F3EEE6"></i><i style="background:#D6D5CF"></i><i style="background:#CCA542"></i><i style="background:#305547"></i>
+            </div>
+            <div class="b">
+              <h3><a href="#" data-go="catalog">Штукатурки и декоративные покрытия</a></h3>
+              <p>Фактура на стене вместо обоев: короед, шуба, венецианка, мокрый шёлк.</p>
+              <div class="subs">
+                <a href="#" data-go="catalog">Фактурные</a>
+                <a href="#" data-go="catalog">Венецианские</a>
+                <a href="#" data-go="catalog">Короед и шуба</a>
+                <a href="#" data-go="catalog">Микроцемент</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="mat">
+            <div class="band" style="background:linear-gradient(115deg,#D8B2AE,#CEA745 40%,#2E507F)">
+              <i style="background:#EFE6D6"></i><i style="background:#CEA745"></i><i style="background:#B5694D"></i><i style="background:#325749"></i>
+            </div>
+            <div class="b">
+              <h3><a href="#" data-go="scan">Колеровка</a></h3>
+              <p>Колеруем при вас по вееру NCS и RAL или по вашему образцу — куску обоев, плитке, фото стены.</p>
+              <div class="subs">
+                <a href="#" data-go="catalog">Веера NCS и RAL</a>
+                <a href="#" data-go="catalog">Базы А и С</a>
+                <a class="go" href="#" data-go="scan">Подобрать по фото →</a>
+              </div>
+            </div>
+          </article>
+
+        </div>
+        <p class="note">Верхний уровень — материал, а не вид работ: покупатель приходит за краской, пропиткой или штукатуркой. Где именно он красит — стену, фасад или забор — уточняется фильтром внутри раздела. <b>Счётчиков по типам на плитках нет специально:</b> текущая разбивка прайса черновая, 1 835 позиций из 3 811 ни в одну группу пока не попали. Числа вернём, когда прайс будет перетегирован.</p>
+      </section>
+
+      <section class="wrap">
+        <div class="scanblock">
+          <div>
+            <span class="eyebrow">Работает на сайте</span>
+            <h2>Сфотографируйте стену — подберём краску</h2>
+            <p>Не нужно везти кусок обоев через весь город. Снимите поверхность на телефон: сервис определит оттенок, покажет ближайшие цвета из наших вееров и посчитает, сколько банок нужно на вашу площадь.</p>
+            <ol class="steps">
+              <li>Фотографируете стену, дверь или образец</li>
+              <li>Получаете название оттенка и краски, в которых он колеруется</li>
+              <li>Оставляете заявку — колеруем к вашему приезду</li>
+            </ol>
+            <a class="btn btn-primary" href="#" data-go="scan"><span class="lens" aria-hidden="true"></span>Подобрать цвет по фото</a>
+          </div>
+          <div class="strip" aria-hidden="true">
+            <i style="background:#EFE6D6"></i><i style="background:#E6D8BE"></i><i style="background:#D6D4CE"></i><i style="background:#B4BFA6"></i>
+            <i style="background:#BFD3E0"></i><i style="background:#D8B2AE"></i><i style="background:#CCA542"></i><i style="background:#B5694D"></i>
+            <i style="background:#305547"></i><i style="background:#2E507F"></i><i style="background:#4A4E52"></i><i style="background:#E9E1CE"></i>
+          </div>
+        </div>
+      </section>
+
+      <section class="wrap">
+        <div class="sec-head">
+          <h2>Оттенки с именами, а не голыми номерами</h2>
+          <a href="#" data-go="catalog">Смотреть все →</a>
+        </div>
+        <div class="shade-wide">
+          <a class="shade" href="#" data-go="catalog"><i style="background:#EFEAE0"></i><span class="t"><b>Тёплый белый бетон</b><code>BT-102 · Teknos · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#E6D8BE"></i><span class="t"><b>Дюна шёлк</b><code>RV-1180 · Decorazza</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#ACB8A1"></i><span class="t"><b>Оливковый бетон</b><code>BT-520 · Teknos · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#C69F3C"></i><span class="t"><b>Горчичный бетон</b><code>BT-830 · Teknos · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#274574"></i><span class="t"><b>Индиго бетон</b><code>BT-680 · Teknos · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#F3EEE6"></i><span class="t"><b>Лён короед</b><code>KR-1010 · Olsta · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#D3D2CC"></i><span class="t"><b>Гранит светлый</b><code>KR-3210 · Olsta · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#305547"></i><span class="t"><b>Бор короед</b><code>KR-5810 · Olsta · матовый</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#D8B3AF"></i><span class="t"><b>Пудра металлик</b><code>AU-9250 · Derufa</code></span></a>
+          <a class="shade" href="#" data-go="catalog"><i style="background:#325749"></i><span class="t"><b>Малахит металлик</b><code>AU-5820 · Derufa</code></span></a>
+        </div>
+        <p class="note">На сайте Dufa, который смотрели на звонке, оттенки лежат в самом низу страницы и подписаны только номерами. Мы делаем наоборот: цвет виден в первом экране, у каждого есть русское имя, код и указание, в какой системе он колеруется.</p>
+      </section>
+
+      <section class="wrap">
+        <div class="sec-head">
+          <h2>Бренды на точке</h2>
+          <a href="#" data-go="catalog">Все 31 →</a>
+        </div>
+        <div class="brands">
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#DCE4F5"><b>ТЕКС</b></span><span class="b"><span>Стены, потолки, эмали, грунты</span><em>1 196 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#D9E8D8"><b>Neomid</b></span><span class="b"><span>Защита дерева, огнезащита, штукатурки</span><em>418 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#F3E3CB"><b>Teknos</b></span><span class="b"><span>Фасад, дерево, промышленные покрытия</span><em>340 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#E7DCF2"><b>Dulux<br>Luxium</b></span><span class="b"><span>Интерьерные краски, белые базы</span><em>290 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#F6DFD9"><b>Decorazza</b></span><span class="b"><span>Декоративка, венецианка, известковые</span><em>251 позиция</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#DBEBEE"><b>Tikkurila</b></span><span class="b"><span>Интерьер, фасад, дерево, полы</span><em>211 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#EDE7CE"><b>Symphony</b></span><span class="b"><span>Интерьерные краски и эмали</span><em>207 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#E0E7DA"><b>Olsta</b></span><span class="b"><span>Фасад, короед, известковые покрытия</span><em>143 позиции</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#F0E2EC"><b>Derufa</b></span><span class="b"><span>Глубоко матовые интерьерные краски</span><em>110 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#DDE6EF"><b>Mapei</b></span><span class="b"><span>Смеси, затирки, гидроизоляция</span><em>93 позиции</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#F4E6D2"><b>Finncolor</b></span><span class="b"><span>Потолки, стены, бюджетная линейка</span><em>76 позиций</em></span></a>
+          <a class="brand" href="#" data-go="catalog"><span class="plate" style="background:#E6E2D3"><b>Bayramix</b></span><span class="b"><span>Мраморная крошка, фактурные покрытия</span><em>74 позиции</em></span></a>
+        </div>
+        <p class="note"><b>Почему тут не пустые рамки.</b> Логотипы нужны, но файлов у нас нет, а чужие логотипы рисовать и тащить из поиска нельзя. Пока плитка держит цвет и смысл сама: цветная плашка, название в фирменной типографике сайта, строка «за что отвечает бренд» и точное число позиций из прайса. Пунктирный уголок справа — это и есть посадочное место логотипа: когда придут SVG, они встанут туда, и плитка не переверстается. Числа по брендам — <b>точные</b>, они считаются из прайса, а не прикидываются. Цвет плашки — наш, а не фирменный цвет бренда.</p>
+      </section>
+
+    </div><!-- /norm many -->
+
+    <!-- === ЗАГРУЗКА === -->
+    <div data-st="loading" hidden>
+      <section class="wrap" aria-busy="true">
+        <div class="sec-head"><h2>Что вам нужно</h2></div>
+        <div class="mats">
+          <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:60%"></div><div class="l skel" style="width:85%"></div><div class="l skel" style="width:40%"></div></div>
+          <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:70%"></div><div class="l skel" style="width:80%"></div><div class="l skel" style="width:45%"></div></div>
+          <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:55%"></div><div class="l skel" style="width:75%"></div><div class="l skel" style="width:50%"></div></div>
+          <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:65%"></div><div class="l skel" style="width:82%"></div><div class="l skel" style="width:38%"></div></div>
+        </div>
+        <p class="note">Скелет, а не крутилка: блоки стоят на своих местах, страница не прыгает, когда придут данные. Кнопка «Подобрать цвет» в первом экране активна всё это время — она не зависит от прайса.</p>
+      </section>
+    </div>
+
+    <!-- === ПУСТО: прайс не обновился === -->
+    <div data-st="empty" hidden>
+      <section class="wrap">
+        <div class="state-box">
+          <span class="badge-emoji" aria-hidden="true">≡</span>
+          <h3>Каталог обновляется</h3>
+          <p>Прайс за сегодня ещё не загрузился, поэтому карточки временно не показываем. Колеровка и подбор цвета по фото работают как обычно, а цену на конкретную позицию менеджер назовёт по телефону.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-go="scan"><span class="lens" aria-hidden="true"></span>Подобрать цвет по фото</a>
+            <a class="btn btn-ghost" href="tel:+79268409951">Позвонить: +7 (926) 840-99-51</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- === ОШИБКА === -->
+    <div data-st="error" hidden>
+      <section class="wrap">
+        <div class="state-box err">
+          <span class="badge-emoji" aria-hidden="true">!</span>
+          <h3>Не удалось загрузить каталог</h3>
+          <p>Сайт не смог получить список товаров. Это на нашей стороне, ваши данные ни при чём. Попробуйте обновить страницу через минуту — или сразу напишите менеджеру, он ответит с ценой и наличием.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-go="home">Обновить страницу</a>
+            <a class="btn btn-ghost" href="tel:+79268409951">Позвонить: +7 (926) 840-99-51</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div><!-- /group home -->
+</main>
+
+<!-- ======================================================================
+     ЭКРАН 2 — КАТАЛОГ
+     Главное действие: открыть карточку товара. Сравнение — вторичное,
+     но живёт прямо в карточке списка (протокол, раздел 4).
+     ====================================================================== -->
+<main class="screen" data-screen="catalog" hidden>
+  <div class="wrap">
+    <p class="crumbs"><a href="#" data-go="home">Главная</a> → <a href="#" data-go="catalog">Краски</a> → <a href="#" data-go="catalog">На водной основе</a> → Для стен и потолков</p>
+    <div class="cat-head">
+      <h1>Краски на водной основе для стен и потолков</h1>
+      <span class="found mono">Найдено 509 позиций · 12 брендов</span>
+      <!-- Раздел 4 протокола: запрос ведёт на точное решение, а не в общий каталог.
+           Эти ссылки — будущие посадочные страницы с адресуемыми URL. -->
+      <div class="quick">
+        <span class="lbl">Сразу к точному:</span>
+        <a href="#" data-go="catalog">матовая белая</a>
+        <a href="#" data-go="catalog">моющаяся</a>
+        <a href="#" data-go="catalog">без запаха</a>
+        <a href="#" data-go="catalog">9 литров</a>
+        <a href="#" data-go="product">Tikkurila матовая</a>
+        <a href="#" data-go="compare">сравнить матовые 9 л</a>
+      </div>
+    </div>
+
+    <div class="cat-layout">
+      <aside class="filters" aria-label="Фильтры">
+        <div class="fgroup">
+          <h4>Цвет</h4>
+          <div class="colorf">
+            <button aria-label="Белые и молочные" style="background:#F3F0E9"></button>
+            <button aria-label="Бежевые" style="background:#E6D8BE"></button>
+            <button aria-label="Охра" style="background:#CCA542"></button>
+            <button aria-label="Терракота" style="background:#B5694D"></button>
+            <button aria-label="Зелёные" style="background:#305547"></button>
+            <button aria-label="Синие" style="background:#2E507F"></button>
+            <button aria-label="Серые" style="background:#8E9AA8"></button>
+            <button aria-label="Графит" style="background:#4A4E52"></button>
+            <button aria-label="Розовые" style="background:#D8B2AE"></button>
+            <button aria-label="Голубые" style="background:#BFD3E0"></button>
+            <button aria-label="Оливковые" style="background:#ACB8A1"></button>
+            <button aria-label="Чёрные" style="background:#1E1E1E"></button>
+          </div>
+        </div>
+        <div class="fgroup">
+          <h4>Тип материала</h4>
+          <label><input type="checkbox" checked> Краски</label>
+          <label><input type="checkbox"> Пропитки для дерева</label>
+          <label><input type="checkbox"> Штукатурки</label>
+          <label><input type="checkbox"> Базы под колеровку</label>
+        </div>
+        <div class="fgroup">
+          <h4>Основа краски</h4>
+          <label><input type="checkbox" checked> Водная</label>
+          <label><input type="checkbox"> Масляная и алкидная</label>
+          <label><input type="checkbox"> По металлу</label>
+        </div>
+        <div class="fgroup">
+          <h4>Блеск</h4>
+          <label><input type="checkbox" checked> Глубокоматовая</label>
+          <label><input type="checkbox"> Матовая</label>
+          <label><input type="checkbox"> Полуматовая и сатин</label>
+          <label><input type="checkbox"> Глянцевая</label>
+        </div>
+        <div class="fgroup">
+          <h4>Фасовка</h4>
+          <label><input type="checkbox"> 0,9 л</label>
+          <label><input type="checkbox"> 2,7 л</label>
+          <label><input type="checkbox"> 4,5 л</label>
+          <label><input type="checkbox" checked> 9 л</label>
+        </div>
+        <div class="fgroup">
+          <h4>Бренд</h4>
+          <label><input type="checkbox"> ТЕКС <span class="n">1196</span></label>
+          <label><input type="checkbox"> Tikkurila <span class="n">211</span></label>
+          <label><input type="checkbox"> Dulux / Luxium <span class="n">290</span></label>
+          <label><input type="checkbox"> Derufa <span class="n">110</span></label>
+          <label><input type="checkbox"> Finncolor <span class="n">76</span></label>
+        </div>
+      </aside>
+
+      <div data-group="catalog">
+
+        <!-- === НОРМА === -->
+        <div data-st="norm">
+          <div class="sortline">
+            <span class="found mono">Показано 9 из 509</span>
+            <span class="sp"></span>
+            <label class="vh" for="sort1">Сортировка</label>
+            <select id="sort1">
+              <option>Сначала недорогие</option>
+              <option>Сначала дорогие</option>
+              <option>По названию</option>
+            </select>
+          </div>
+
+          <div class="grid">
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#F4F1EA"></div><div class="can"><i style="background:#F4F1EA"></i></div></div>
+              <div class="b"><span class="bl">Tikkurila</span>
+                <h3><a href="#" data-go="product">EURO MATT 3 краска для стен и потолков, абсолютно матовая, база A (9 л)</a></h3>
+                <div class="attrs"><span>глубокоматовая</span><span>водная</span><span>под колеровку</span></div>
+              </div>
+              <div class="f"><span class="price">8 250 ₽<small>917 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox" checked> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#EFF1F0"></div><div class="can"><i style="background:#EFF1F0"></i></div></div>
+              <div class="b"><span class="bl">Tikkurila</span>
+                <h3><a href="#" data-go="product">EURO POWER 7 краска моющаяся, для стен и потолка, матовая, база A (9 л)</a></h3>
+                <div class="attrs"><span>моющаяся</span><span>матовая</span><span>водная</span></div>
+              </div>
+              <div class="f"><span class="price">9 400 ₽<small>1 044 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox" checked> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#FBFAF6"></div><div class="can"><i style="background:#FBFAF6"></i></div></div>
+              <div class="b"><span class="bl">Finncolor</span>
+                <h3><a href="#" data-go="product">OASIS SUPER WHITE краска для потолков супербелая, глубокоматовая (9 л)</a></h3>
+                <div class="attrs"><span>белая</span><span>для потолка</span><span>без колеровки</span></div>
+              </div>
+              <div class="f"><span class="price">3 050 ₽<small>339 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox" checked> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#F2EFE7"></div><div class="can"><i style="background:#F2EFE7"></i></div></div>
+              <div class="b"><span class="bl">ТЕКС</span>
+                <h3><a href="#" data-go="product">HARMONY VELURE краска для стен и потолков, акриловая, глубокоматовая, база А (9 л)</a></h3>
+                <div class="attrs"><span>глубокоматовая</span><span>акриловая</span><span>под колеровку</span></div>
+              </div>
+              <div class="f"><span class="price">17 550 ₽<small>1 950 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox"> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#F6F3EC"></div><div class="can"><i style="background:#F6F3EC"></i></div></div>
+              <div class="b"><span class="bl">Derufa</span>
+                <h3><a href="#" data-go="product" title="SCHUPPE. Глубоко матовая краска. Идеально подходит для стен и потолков, легко наносится валиком. При работе с этой краской не требуются особые навыки. База «А», 4,5 л">SCHUPPE глубоко матовая краска для стен и потолков, база «А» (4,5 л)</a></h3>
+                <div class="attrs"><span>глубокоматовая</span><span>под колеровку</span><span>валиком</span></div>
+              </div>
+              <div class="f"><span class="price">9 900 ₽<small>2 200 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox"> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#FCFCFA"></div><div class="can"><i style="background:#FCFCFA"></i></div></div>
+              <div class="b"><span class="bl">Tikkurila</span>
+                <h3><a href="#" data-go="product">SIRO WHITE краска для потолка, антибликовая, глубокоматовая, белый (9 л)</a></h3>
+                <div class="attrs"><span>антибликовая</span><span>для потолка</span><span>белая</span></div>
+              </div>
+              <div class="f"><span class="price">13 400 ₽<small>1 489 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox"> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#1E1E1E"></div><div class="can"><i style="background:#1E1E1E"></i></div></div>
+              <div class="b"><span class="bl">Finncolor</span>
+                <h3><a href="#" data-go="product">EXPERT TOTAL BLACK краска укрывистая для стен и потолков, глубокоматовый, чёрный (9 л)</a></h3>
+                <div class="attrs"><span>чёрная</span><span>глубокоматовая</span><span>укрывистая</span></div>
+              </div>
+              <div class="f"><span class="price">4 100 ₽<small>456 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox"> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#F4F1EA"></div><div class="can"><i style="background:#F4F1EA"></i></div></div>
+              <div class="b"><span class="bl">Tikkurila</span>
+                <h3><a href="#" data-go="product">PROF EURO 7 краска интерьерная, суперстойкая, матовая, база A (9 л)</a></h3>
+                <div class="attrs"><span>суперстойкая</span><span>матовая</span><span>под колеровку</span></div>
+              </div>
+              <div class="f"><span class="price">7 750 ₽<small>861 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox"> Сравнить по характеристикам</label>
+            </article>
+
+            <article class="card">
+              <div class="art"><div class="paint" style="background:#EDE9E0"></div><div class="can"><i style="background:#EDE9E0"></i></div></div>
+              <div class="b"><span class="bl">Tikkurila</span>
+                <h3><a href="#" data-go="product">EURO MATT 3 краска для стен и потолков, абсолютно матовая, база C (9 л)</a></h3>
+                <div class="attrs"><span>база C</span><span>тёмные тона</span><span>под колеровку</span></div>
+              </div>
+              <div class="f"><span class="price">7 100 ₽<small>789 ₽ за литр</small></span><span class="stock">наличие уточним</span></div>
+              <label class="cmp"><input type="checkbox"> Сравнить по характеристикам</label>
+            </article>
+          </div>
+
+          <div class="cmpbar">
+            <span class="sw" aria-hidden="true"><i style="background:#F4F1EA"></i><i style="background:#EFF1F0"></i><i style="background:#FBFAF6"></i></span>
+            <span class="t">Выбрано 3 краски</span>
+            <a class="btn btn-primary" href="#" data-go="compare">Сравнить по характеристикам</a>
+          </div>
+
+          <p class="note">Цветное поле карточки — цвет самого материала: у базы под колеровку он молочно-белый, у TOTAL BLACK — чёрный. Это не картинка-заглушка, а честный образец. Фотографии выкрасок заменят заливку, когда магазин пришлёт съёмку (ТЗ в <b>41_ТЗ_на_съёмку_выкрасок.md</b>). Наличие пишем «уточним»: в прайсе остатков нет, обещать «есть на точке» мы не имеем права.</p>
+        </div>
+
+        <!-- === МНОГО ДАННЫХ === -->
+        <div data-st="many" hidden>
+          <div class="sortline">
+            <span class="found mono">Показано 12 из 509 · страница 1 из 43</span>
+            <span class="sp"></span>
+            <label class="vh" for="sort2">Сортировка</label>
+            <select id="sort2">
+              <option>Сначала недорогие</option>
+              <option>Сначала дорогие</option>
+              <option>По названию</option>
+            </select>
+          </div>
+          <div class="grid">
+            <article class="card"><div class="art"><div class="paint" style="background:#FBFAF6"></div><div class="can"><i style="background:#FBFAF6"></i></div></div><div class="b"><span class="bl">Finncolor</span><h3><a href="#" data-go="product">OASIS SUPER WHITE краска для потолков супербелая, глубокоматовая (0,9 л)</a></h3><div class="attrs"><span>белая</span><span>0,9 л</span></div></div><div class="f"><span class="price">350 ₽<small>389 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#1E1E1E"></div><div class="can"><i style="background:#1E1E1E"></i></div></div><div class="b"><span class="bl">Finncolor</span><h3><a href="#" data-go="product">EXPERT TOTAL BLACK краска укрывистая, глубокоматовый, чёрный (0,9 л)</a></h3><div class="attrs"><span>чёрная</span><span>0,9 л</span></div></div><div class="f"><span class="price">500 ₽<small>556 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#EDE9E0"></div><div class="can"><i style="background:#EDE9E0"></i></div></div><div class="b"><span class="bl">Tikkurila</span><h3><a href="#" data-go="product">EURO MATT 3 краска для стен и потолков, абсолютно матовая, база C (0,9 л)</a></h3><div class="attrs"><span>база C</span><span>0,9 л</span></div></div><div class="f"><span class="price">850 ₽<small>944 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#F4F1EA"></div><div class="can"><i style="background:#F4F1EA"></i></div></div><div class="b"><span class="bl">Tikkurila</span><h3><a href="#" data-go="product">EURO SMART 2 краска интерьерная, для стен и потолка, база А (0,9 л)</a></h3><div class="attrs"><span>экономичная</span><span>0,9 л</span></div></div><div class="f"><span class="price">850 ₽<small>944 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#EFF1F0"></div><div class="can"><i style="background:#EFF1F0"></i></div></div><div class="b"><span class="bl">Tikkurila</span><h3><a href="#" data-go="product">EURO POWER 7 краска моющаяся, матовая, база C (0,9 л)</a></h3><div class="attrs"><span>моющаяся</span><span>база C</span></div></div><div class="f"><span class="price">900 ₽<small>1 000 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#F4F1EA"></div><div class="can"><i style="background:#F4F1EA"></i></div></div><div class="b"><span class="bl">Tikkurila</span><h3><a href="#" data-go="product">EURO MATT 3 краска для стен и потолков, абсолютно матовая, база A (0,9 л)</a></h3><div class="attrs"><span>глубокоматовая</span><span>0,9 л</span></div></div><div class="f"><span class="price">1 000 ₽<small>1 111 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#EFF1F0"></div><div class="can"><i style="background:#EFF1F0"></i></div></div><div class="b"><span class="bl">Tikkurila</span><h3><a href="#" data-go="product">EURO POWER 7 краска моющаяся, для стен и потолка, матовая, база A (0,9 л)</a></h3><div class="attrs"><span>моющаяся</span><span>матовая</span></div></div><div class="f"><span class="price">1 100 ₽<small>1 222 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#F2EFE7"></div><div class="can"><i style="background:#F2EFE7"></i></div></div><div class="b"><span class="bl">ТЕКС</span><h3><a href="#" data-go="product">HARMONY VELURE краска для стен и потолков, акриловая, глубокоматовая, база С (0,9 л)</a></h3><div class="attrs"><span>база С</span><span>акриловая</span></div></div><div class="f"><span class="price">1 650 ₽<small>1 833 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#FCFCFA"></div><div class="can"><i style="background:#FCFCFA"></i></div></div><div class="b"><span class="bl">Tikkurila</span><h3><a href="#" data-go="product">SIRO WHITE краска для потолка, антибликовая, глубокоматовая, белый (0,9 л)</a></h3><div class="attrs"><span>антибликовая</span><span>белая</span></div></div><div class="f"><span class="price">1 600 ₽<small>1 778 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#F6F3EC"></div><div class="can"><i style="background:#F6F3EC"></i></div></div><div class="b"><span class="bl">Derufa</span><h3><a href="#" data-go="product" title="SCHUPPE. Глубоко матовая краска. Идеально подходит для стен и потолков, легко наносится валиком. При работе с этой краской не требуются особые навыки. База «А», 0,9 л">SCHUPPE глубоко матовая краска для стен и потолков, база «А» (0,9 л)</a></h3><div class="attrs"><span>глубокоматовая</span><span>0,9 л</span></div></div><div class="f"><span class="price">2 900 ₽<small>3 222 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#FAF7F1"></div><div class="can"><i style="background:#FAF7F1"></i></div></div><div class="b"><span class="bl">Derufa</span><h3><a href="#" data-go="product" title="BLICK. Глубокоматовая краска, идеально подходит для потолка: отличная растекаемость, однопроходная, устойчива к влажной уборке. База «А», 0,9 л">BLICK глубокоматовая краска для потолка, однопроходная, база «А» (0,9 л)</a></h3><div class="attrs"><span>для потолка</span><span>однопроходная</span></div></div><div class="f"><span class="price">4 500 ₽<small>5 000 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+            <article class="card"><div class="art"><div class="paint" style="background:#F7F4EE"></div><div class="can"><i style="background:#F7F4EE"></i></div></div><div class="b"><span class="bl">Derufa</span><h3><a href="#" data-go="product" title="SATIN SM. Шелковисто-матовая краска для помещений с высокой эксплуатацией: допускает мытьё, подходит для ванных, кухонь, детских. База «А», 0,9 л">SATIN SM шелковисто-матовая краска для влажных помещений, база «А» (0,9 л)</a></h3><div class="attrs"><span>шелковисто-матовая</span><span>моющаяся</span></div></div><div class="f"><span class="price">5 250 ₽<small>5 833 ₽ за литр</small></span><span class="stock">наличие уточним</span></div><label class="cmp"><input type="checkbox"> Сравнить</label></article>
+          </div>
+          <nav class="pager" aria-label="Страницы">
+            <a href="#" aria-current="page">1</a><a href="#">2</a><a href="#">3</a><a href="#">4</a><a href="#">…</a><a href="#">43</a><a href="#">Дальше →</a>
+          </nav>
+          <p class="note">509 позиций в одной категории — это норма для нашего прайса, поэтому список всегда с пагинацией и адресуемыми страницами (робот должен видеть страницу 2, а не бесконечную прокрутку). Длинные названия Derufa обрезаются на третьей строке: полное название остаётся в подсказке и в карточке товара, сетка от него не разъезжается.</p>
+        </div>
+
+        <!-- === ЗАГРУЗКА === -->
+        <div data-st="loading" hidden>
+          <div class="sortline"><span class="found mono">Подбираем позиции…</span></div>
+          <div class="grid" aria-busy="true">
+            <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:40%"></div><div class="l skel" style="width:90%"></div><div class="l skel" style="width:65%"></div><div class="l skel" style="width:35%"></div></div>
+            <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:45%"></div><div class="l skel" style="width:85%"></div><div class="l skel" style="width:70%"></div><div class="l skel" style="width:30%"></div></div>
+            <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:38%"></div><div class="l skel" style="width:92%"></div><div class="l skel" style="width:60%"></div><div class="l skel" style="width:40%"></div></div>
+            <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:42%"></div><div class="l skel" style="width:88%"></div><div class="l skel" style="width:66%"></div><div class="l skel" style="width:33%"></div></div>
+            <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:36%"></div><div class="l skel" style="width:94%"></div><div class="l skel" style="width:58%"></div><div class="l skel" style="width:44%"></div></div>
+            <div class="skel-card"><div class="a skel"></div><div class="l skel" style="width:48%"></div><div class="l skel" style="width:80%"></div><div class="l skel" style="width:72%"></div><div class="l skel" style="width:28%"></div></div>
+          </div>
+          <p class="note">Фильтры слева остаются активными во время загрузки — их не блокируем, иначе человек не может исправить запрос.</p>
+        </div>
+
+        <!-- === ПУСТО === -->
+        <div data-st="empty" hidden>
+          <div class="state-box">
+            <span class="badge-emoji" aria-hidden="true">0</span>
+            <h3>По этим фильтрам ничего нет</h3>
+            <p>Глубокоматовых красок на водной основе в фасовке 9 л у бренда Finncolor в прайсе нет. Уберите один фильтр — например, фасовку — или посмотрите ближайшие варианты у других брендов.</p>
+            <div class="actions">
+              <a class="btn btn-primary" href="#" data-go="catalog">Убрать фасовку «9 л»</a>
+              <a class="btn btn-ghost" href="#" data-go="catalog">Сбросить все фильтры</a>
+              <a class="btn btn-ghost" href="#" data-go="scan"><span class="lens" aria-hidden="true"></span>Подобрать по фото</a>
+            </div>
+          </div>
+          <p class="note">Пустой экран не оставляем тупиком: три выхода — снять один фильтр, сбросить всё, уйти в подбор по фото. Текст называет причину конкретно, а не «ничего не найдено».</p>
+        </div>
+
+        <!-- === ОШИБКА === -->
+        <div data-st="error" hidden>
+          <div class="state-box err">
+            <span class="badge-emoji" aria-hidden="true">!</span>
+            <h3>Каталог не отвечает</h3>
+            <p>Список товаров не загрузился: сервер не ответил за 10 секунд. Фильтры мы запомнили — нажмите «Повторить», и они применятся снова. Если спешите, менеджер назовёт цену и наличие по телефону.</p>
+            <div class="actions">
+              <a class="btn btn-primary" href="#" data-go="catalog">Повторить</a>
+              <a class="btn btn-ghost" href="tel:+79268409951">Позвонить: +7 (926) 840-99-51</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ======================================================================
+     ЭКРАН 3 — КАРТОЧКА ТОВАРА (точное решение под запрос)
+     Главное действие: «Добавить в заявку».
+     ====================================================================== -->
+<main class="screen" data-screen="product" hidden>
+  <div class="wrap">
+    <p class="crumbs"><a href="#" data-go="home">Главная</a> → <a href="#" data-go="catalog">Краски</a> → <a href="#" data-go="catalog">На водной основе</a> → <a href="#" data-go="catalog">Матовые</a> → EURO MATT 3</p>
+
+    <div data-group="product">
+
+      <!-- === НОРМА / МНОГО === -->
+      <div data-st="norm many">
+        <div class="pdp">
+          <div>
+            <span class="eyebrow">Tikkurila · для стен и потолков</span>
+            <h1>EURO MATT 3 — абсолютно матовая краска для стен и потолков, база A, 9 л</h1>
+            <div class="plate-big">
+              <div class="paint" style="background:#F4F1EA"></div>
+              <span class="cap">База A · колеруется в светлые тона. Показан цвет базы до колеровки.</span>
+            </div>
+
+            <h2 style="font-size:24px;margin:var(--s6) 0 var(--s3)">Оттенки, в которые её колеруем</h2>
+            <div class="shade-wide">
+              <a class="shade" href="#" data-go="scan"><i style="background:#EFE6D6"></i><span class="t"><b>Тёплый жемчуг</b><code>RV-1002</code></span></a>
+              <a class="shade" href="#" data-go="scan"><i style="background:#E9E1CE"></i><span class="t"><b>Топлёное молоко</b><code>CL-1002</code></span></a>
+              <a class="shade" href="#" data-go="scan"><i style="background:#D6D4CE"></i><span class="t"><b>Серебристый камень</b><code>RV-3120</code></span></a>
+              <a class="shade" href="#" data-go="scan"><i style="background:#B4BFA6"></i><span class="t"><b>Полынный шёлк</b><code>RV-5130</code></span></a>
+              <a class="shade" href="#" data-go="scan"><i style="background:#BFD3E0"></i><span class="t"><b>Морозное утро</b><code>RV-6120</code></span></a>
+            </div>
+            <p class="note">Оттенки стоят рядом с ценой, а не внизу страницы, и подписаны именами. Нужного нет — <a href="#" data-go="scan" style="color:var(--accent)">пришлите фото стены</a>, подберём по образцу.</p>
+
+            <h2 style="font-size:24px;margin:var(--s6) 0 var(--s3)">Характеристики</h2>
+            <table class="tbl">
+              <tbody>
+                <tr><th>Бренд и серия</th><td>Tikkurila, EURO MATT 3</td></tr>
+                <tr><th>Тип материала</th><td>Краска на водной основе</td></tr>
+                <tr><th>Основа</th><td>Водно-дисперсионная акриловая</td></tr>
+                <tr><th>Блеск</th><td>Абсолютно матовая</td></tr>
+                <tr><th>Где применяют</th><td>Стены и потолки в сухих помещениях</td></tr>
+                <tr><th>База под колеровку</th><td>A — светлые тона (для тёмных берут базу C)</td></tr>
+                <tr><th>Фасовка</th><td>0,9 л и 9 л</td></tr>
+                <tr><th>Расход</th><td><span class="soft">7–12 м² на литр — из техкарты производителя</span></td></tr>
+                <tr><th>Влажная уборка</th><td><span class="soft">допускается, без абразивов — из техкарты производителя</span></td></tr>
+                <tr><th>Время высыхания</th><td><span class="soft">2 часа между слоями — из техкарты производителя</span></td></tr>
+              </tbody>
+            </table>
+            <p class="note">Серым помечено то, чего в прайсе магазина нет: эти поля заполняются из техкарт производителя при загрузке товаров. Цена, фасовка и база — из прайса, они точные.</p>
+
+            <h2 style="font-size:24px;margin:var(--s6) 0 var(--s3)">Сравнение с похожими</h2>
+            <div class="cmp-scroll">
+              <table class="cmp-tbl">
+                <thead>
+                  <tr>
+                    <th class="rowh">Характеристика</th>
+                    <th><span class="cmp-head"><i style="background:#F4F1EA"></i><b>Tikkurila EURO MATT 3</b><span>эта краска</span></span></th>
+                    <th><span class="cmp-head"><i style="background:#EFF1F0"></i><b>Tikkurila EURO POWER 7</b><span>моющаяся</span></span></th>
+                    <th><span class="cmp-head"><i style="background:#F2EFE7"></i><b>ТЕКС HARMONY VELURE</b><span>велюровая</span></span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><th class="rowh">Цена за 9 л</th><td class="win mono">8 250 ₽</td><td class="mono">9 400 ₽</td><td class="mono">17 550 ₽</td></tr>
+                  <tr><th class="rowh">Цена за литр</th><td class="win mono">917 ₽</td><td class="mono">1 044 ₽</td><td class="mono">1 950 ₽</td></tr>
+                  <tr><th class="rowh">Блеск</th><td>абсолютно матовая</td><td>матовая</td><td>глубокоматовая</td></tr>
+                  <tr><th class="rowh">Влажная уборка</th><td><span class="soft">осторожно</span></td><td class="win">выдерживает мытьё</td><td><span class="soft">осторожно</span></td></tr>
+                  <tr><th class="rowh">База под колеровку</th><td>A и C</td><td>A и C</td><td>А и С</td></tr>
+                  <tr><th class="rowh">Фасовки в прайсе</th><td>0,9 л · 9 л</td><td>0,9 л · 9 л</td><td>0,9 л · 9 л</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="note">Это и есть наше преимущество из разговора: дотошный покупатель, который пошёл бы сравнивать на другие сайты, сравнивает у нас. <a href="#" data-go="compare" style="color:var(--accent)">Развернуть полное сравнение →</a></p>
+          </div>
+
+          <aside class="buybox">
+            <div class="p mono">8 250 ₽<small>917 ₽ за литр · база A, 9 л</small></div>
+            <div>
+              <p style="font-size:15px;color:var(--muted);margin-bottom:8px">Фасовка</p>
+              <div class="vol">
+                <button type="button" aria-pressed="false">0,9 л — 1 000 ₽</button>
+                <button type="button" aria-pressed="true">9 л — 8 250 ₽</button>
+              </div>
+            </div>
+            <a class="btn btn-primary" href="#" data-go="order" style="width:100%">Добавить в заявку</a>
+            <a class="btn btn-ghost" href="#" data-go="scan" style="width:100%"><span class="lens" aria-hidden="true"></span>Подобрать оттенок по фото</a>
+            <p style="font-size:15px;color:var(--muted)">Наличие уточняет менеджер при подтверждении заявки: остатков в прайсе нет, поэтому «есть на складе» мы не пишем. Колеровка на точке 9:00–17:00.</p>
+            <p style="font-size:15px;color:var(--warn);background:var(--warn-soft);padding:12px;border-radius:var(--r-s)">Колерованная краска изготавливается по индивидуальному заказу — условия возврата отличаются от обычного товара. <a href="#" data-go="product" style="color:var(--warn)">Условия возврата</a></p>
+          </aside>
+        </div>
+      </div>
+
+      <!-- === ЗАГРУЗКА === -->
+      <div data-st="loading" hidden>
+        <div class="pdp" aria-busy="true">
+          <div>
+            <div class="skel" style="height:26px;width:45%;margin-bottom:12px"></div>
+            <div class="skel" style="height:40px;width:90%;margin-bottom:8px"></div>
+            <div class="skel" style="height:40px;width:60%;margin-bottom:20px"></div>
+            <div class="skel" style="height:280px;border-radius:16px"></div>
+          </div>
+          <div class="buybox">
+            <div class="skel" style="height:40px;width:60%"></div>
+            <div class="skel" style="height:44px"></div>
+            <div class="skel" style="height:44px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === ПУСТО: позиции нет === -->
+      <div data-st="empty" hidden>
+        <div style="padding:var(--s5) 0 var(--s7)">
+          <div class="state-box">
+            <span class="badge-emoji" aria-hidden="true">—</span>
+            <h3>Этой позиции больше нет в прайсе</h3>
+            <p>EURO MATT 3 в фасовке 9 л ушла из прайса поставщика. Вот три краски того же класса — глубокоматовые, под колеровку, для стен и потолков.</p>
+            <div class="actions">
+              <a class="btn btn-primary" href="#" data-go="compare">Сравнить три замены</a>
+              <a class="btn btn-ghost" href="#" data-go="catalog">Вернуться в каталог</a>
+            </div>
+          </div>
+          <p class="note">Страницу не удаляем и 404 не отдаём: по ней приходят из поиска. Вместо ошибки — замены и переход в сравнение.</p>
+        </div>
+      </div>
+
+      <!-- === ОШИБКА === -->
+      <div data-st="error" hidden>
+        <div style="padding:var(--s5) 0 var(--s7)">
+          <div class="state-box err">
+            <span class="badge-emoji" aria-hidden="true">!</span>
+            <h3>Не удалось получить цену</h3>
+            <p>Карточка загрузилась, а цена — нет: прайс не ответил. Характеристики и оттенки ниже верные, цену уточнит менеджер.</p>
+            <div class="actions">
+              <a class="btn btn-primary" href="#" data-go="product">Повторить</a>
+              <a class="btn btn-ghost" href="tel:+79268409951">Позвонить: +7 (926) 840-99-51</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === ЗАЯВКА: подтверждение, чтобы кнопка не вела в тупик === -->
+      <div data-st="order" hidden>
+        <div style="padding:var(--s5) 0 var(--s7);max-width:640px">
+          <div class="state-box">
+            <span class="badge-emoji" aria-hidden="true">✓</span>
+            <h3>Позиция добавлена в заявку</h3>
+            <p>Tikkurila EURO MATT 3, база A, 9 л — 8 250 ₽. Оставьте номер: менеджер подтвердит наличие, цену и время колеровки. Заявка уходит менеджеру на почту, дублируется в CRM.</p>
+            <div style="width:100%;max-width:360px;text-align:left">
+              <label for="ph" style="display:block;font-size:15px;color:var(--muted);margin-bottom:6px">Телефон</label>
+              <input id="ph" type="tel" inputmode="tel" value="+7 " placeholder="+7 926 840-99-51" style="width:100%;font:inherit;font-size:16px;min-height:44px;padding:10px 12px;border-radius:8px;border:1px solid var(--border-input);background:var(--surface);color:var(--ink)">
+              <p style="font-size:14px;color:var(--muted);margin-top:8px">Отправляя заявку, вы соглашаетесь на обработку персональных данных. Контакты храним 180 дней и удаляем.</p>
+            </div>
+            <div class="actions">
+              <a class="btn btn-primary" href="#" data-go="catalog">Отправить заявку</a>
+              <a class="btn btn-ghost" href="#" data-go="product">Вернуться к товару</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- ======================================================================
+     ЭКРАН 4 — СРАВНЕНИЕ ПО ХАРАКТЕРИСТИКАМ
+     Главное действие: «Выбрать эту краску».
+     ====================================================================== -->
+<main class="screen" data-screen="compare" hidden>
+  <div class="wrap">
+    <p class="crumbs"><a href="#" data-go="home">Главная</a> → <a href="#" data-go="catalog">Краски</a> → Сравнение</p>
+    <div class="cat-head">
+      <h1>Сравнение матовых красок для стен, 9 л</h1>
+      <span class="found mono">3 позиции · цены из прайса на 08.09.2026</span>
+    </div>
+
+    <div data-group="compare" style="padding-bottom:var(--s7)">
+
+      <!-- === НОРМА === -->
+      <div data-st="norm">
+        <div class="cmp-scroll">
+          <table class="cmp-tbl">
+            <thead>
+              <tr>
+                <th class="rowh">Характеристика</th>
+                <th><span class="cmp-head"><i style="background:#F4F1EA"></i><b>Tikkurila EURO MATT 3</b><span>база A, 9 л</span></span></th>
+                <th><span class="cmp-head"><i style="background:#EFF1F0"></i><b>Tikkurila EURO POWER 7</b><span>база A, 9 л</span></span></th>
+                <th><span class="cmp-head"><i style="background:#FBFAF6"></i><b>Finncolor OASIS SUPER WHITE</b><span>белая, 9 л</span></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th class="rowh">Цена</th><td class="mono">8 250 ₽</td><td class="mono">9 400 ₽</td><td class="win mono">3 050 ₽</td></tr>
+              <tr><th class="rowh">Цена за литр</th><td class="mono">917 ₽</td><td class="mono">1 044 ₽</td><td class="win mono">339 ₽</td></tr>
+              <tr><th class="rowh">Тип материала</th><td>краска на водной основе</td><td>краска на водной основе</td><td>краска на водной основе</td></tr>
+              <tr><th class="rowh">Блеск</th><td>абсолютно матовая</td><td>матовая</td><td>глубокоматовая</td></tr>
+              <tr><th class="rowh">Для чего</th><td>стены и потолки</td><td>стены и потолки, кухня</td><td>только потолки</td></tr>
+              <tr><th class="rowh">Колеруется</th><td class="win">да, базы A и C</td><td class="win">да, базы A и C</td><td>нет, только белая</td></tr>
+              <tr><th class="rowh">Влажная уборка</th><td><span class="soft">осторожно</span></td><td class="win">выдерживает мытьё</td><td><span class="soft">не рекомендуется</span></td></tr>
+              <tr><th class="rowh">Расход</th><td><span class="soft">7–12 м²/л</span></td><td><span class="soft">7–12 м²/л</span></td><td><span class="soft">до 10 м²/л</span></td></tr>
+              <tr><th class="rowh">Хватит на комнату 18 м² в 2 слоя</th><td class="win">да, с запасом</td><td class="win">да, с запасом</td><td class="win">да, с запасом</td></tr>
+              <tr><th class="rowh"></th>
+                <td><a class="btn btn-primary btn-sm" href="#" data-go="product">Выбрать эту</a></td>
+                <td><a class="btn btn-ghost btn-sm" href="#" data-go="product">Выбрать эту</a></td>
+                <td><a class="btn btn-ghost btn-sm" href="#" data-go="product">Выбрать эту</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Зелёным помечено лучшее значение в строке — читается за три секунды, без вчитывания в цифры. Серым — поля из техкарт производителя, их в прайсе нет. На 360 px таблица прокручивается вбок, столбец с названиями характеристик приклеен слева.</p>
+      </div>
+
+      <!-- === МНОГО === -->
+      <div data-st="many" hidden>
+        <div class="cmp-scroll">
+          <table class="cmp-tbl">
+            <thead>
+              <tr>
+                <th class="rowh">Характеристика</th>
+                <th><span class="cmp-head"><i style="background:#F4F1EA"></i><b>Tikkurila EURO MATT 3</b><span>база A, 9 л</span></span></th>
+                <th><span class="cmp-head"><i style="background:#EFF1F0"></i><b>Tikkurila EURO POWER 7</b><span>база A, 9 л</span></span></th>
+                <th><span class="cmp-head"><i style="background:#FBFAF6"></i><b>Finncolor OASIS SUPER WHITE</b><span>белая, 9 л</span></span></th>
+                <th><span class="cmp-head"><i style="background:#F2EFE7"></i><b>ТЕКС HARMONY VELURE</b><span>база А, 9 л</span></span></th>
+                <th><span class="cmp-head"><i style="background:#FCFCFA"></i><b>Tikkurila SIRO WHITE</b><span>белая, 9 л</span></span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th class="rowh">Цена</th><td class="mono">8 250 ₽</td><td class="mono">9 400 ₽</td><td class="win mono">3 050 ₽</td><td class="mono">17 550 ₽</td><td class="mono">13 400 ₽</td></tr>
+              <tr><th class="rowh">Цена за литр</th><td class="mono">917 ₽</td><td class="mono">1 044 ₽</td><td class="win mono">339 ₽</td><td class="mono">1 950 ₽</td><td class="mono">1 489 ₽</td></tr>
+              <tr><th class="rowh">Блеск</th><td>абсолютно матовая</td><td>матовая</td><td>глубокоматовая</td><td>глубокоматовая</td><td>глубокоматовая</td></tr>
+              <tr><th class="rowh">Для чего</th><td>стены и потолки</td><td>стены и потолки, кухня</td><td>только потолки</td><td>стены, велюровый эффект</td><td>потолки, антиблик</td></tr>
+              <tr><th class="rowh">Колеруется</th><td class="win">да, A и C</td><td class="win">да, A и C</td><td>нет</td><td class="win">да, А и С</td><td>нет</td></tr>
+              <tr><th class="rowh">Влажная уборка</th><td><span class="soft">осторожно</span></td><td class="win">выдерживает мытьё</td><td><span class="soft">не рекомендуется</span></td><td><span class="soft">осторожно</span></td><td><span class="soft">не рекомендуется</span></td></tr>
+              <tr><th class="rowh"></th>
+                <td><a class="btn btn-primary btn-sm" href="#" data-go="product">Выбрать</a></td>
+                <td><a class="btn btn-ghost btn-sm" href="#" data-go="product">Выбрать</a></td>
+                <td><a class="btn btn-ghost btn-sm" href="#" data-go="product">Выбрать</a></td>
+                <td><a class="btn btn-ghost btn-sm" href="#" data-go="product">Выбрать</a></td>
+                <td><a class="btn btn-ghost btn-sm" href="#" data-go="product">Выбрать</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">Больше пяти колонок не пускаем: сравнение перестаёт читаться. При попытке добавить шестую предлагаем убрать одну из выбранных.</p>
+      </div>
+
+      <!-- === ПУСТО === -->
+      <div data-st="empty" hidden>
+        <div class="state-box">
+          <span class="badge-emoji" aria-hidden="true">□</span>
+          <h3>Пока сравнивать нечего</h3>
+          <p>Отметьте «Сравнить по характеристикам» хотя бы у двух красок в каталоге — покажем их рядом: цену за литр, блеск, колеруется или нет, выдержит ли мытьё.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-go="catalog">Выбрать краски в каталоге</a>
+            <a class="btn btn-ghost" href="#" data-go="catalog">Готовая подборка: матовые 9 л</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- === ЗАГРУЗКА === -->
+      <div data-st="loading" hidden>
+        <div class="cmp-scroll" style="padding:var(--s4)" aria-busy="true">
+          <div class="skel" style="height:64px;margin-bottom:12px"></div>
+          <div class="skel" style="height:44px;margin-bottom:8px"></div>
+          <div class="skel" style="height:44px;margin-bottom:8px"></div>
+          <div class="skel" style="height:44px;margin-bottom:8px"></div>
+          <div class="skel" style="height:44px"></div>
+        </div>
+      </div>
+
+      <!-- === ОШИБКА === -->
+      <div data-st="error" hidden>
+        <div class="state-box err">
+          <span class="badge-emoji" aria-hidden="true">!</span>
+          <h3>Сравнение не собралось</h3>
+          <p>Одна из красок не загрузилась, и таблица получилась бы с дырами — показывать такое хуже, чем не показывать. Попробуйте ещё раз или уберите последнюю добавленную позицию.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-go="compare">Повторить</a>
+            <a class="btn btn-ghost" href="#" data-go="catalog">Вернуться в каталог</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- ======================================================================
+     ЭКРАН 5 — ПОДОБРАТЬ ЦВЕТ (/scan)
+     Протокол: функционал сделан, временно отключён на время тестирования,
+     будет включён. Поэтому в макете он включён, а не заглушка.
+     Главное действие: «Сфотографировать стену».
+     ====================================================================== -->
+<main class="screen" data-screen="scan" hidden>
+  <div class="wrap">
+    <p class="crumbs"><a href="#" data-go="home">Главная</a> → Подобрать цвет</p>
+    <div class="cat-head">
+      <h1>Подбор цвета по фото</h1>
+      <span class="found">Снимите стену, дверь или кусок обоев — назовём оттенок, краску и количество банок</span>
+    </div>
+
+    <div class="scan" data-group="scan">
+
+      <!-- === ПУСТО: начальное состояние === -->
+      <div data-st="empty norm">
+        <div class="viewport">
+          <span class="icon" aria-hidden="true"></span>
+          <h3 style="font-family:var(--font-display);font-size:22px">Наведите камеру на поверхность</h3>
+          <p style="color:var(--muted);max-width:44ch">Снимайте при дневном свете, без вспышки и без бликов. Если рядом положить белый лист — точность будет выше.</p>
+          <div class="cta" style="justify-content:center">
+            <button class="btn btn-primary" type="button" data-go="scan-result"><span class="lens" aria-hidden="true"></span>Сделать фото</button>
+            <button class="btn btn-ghost" type="button" data-go="scan-result">Загрузить из галереи</button>
+          </div>
+        </div>
+        <p class="note">Первый экран сканера пустой по замыслу: одно действие и одна подсказка, как снимать. Всё остальное появляется после фото.</p>
+      </div>
+
+      <!-- === ЗАГРУЗКА === -->
+      <div data-st="loading" hidden>
+        <div class="viewport" aria-busy="true">
+          <div class="skel" style="width:120px;height:120px;border-radius:16px"></div>
+          <h3 style="font-family:var(--font-display);font-size:22px">Разбираем цвет</h3>
+          <p style="color:var(--muted)">Сравниваем с 30 оттенками наших вееров. Обычно занимает 2–3 секунды.</p>
+          <button class="btn btn-ghost" type="button" data-go="scan">Отменить</button>
+        </div>
+      </div>
+
+      <!-- === РЕЗУЛЬТАТ === -->
+      <div data-st="scan-result" hidden>
+        <div class="match" style="margin-bottom:var(--s4)">
+          <i style="background:#EFE6D6"></i>
+          <div>
+            <b>Тёплый жемчуг</b>
+            <span>RV-1002 · Decorazza · перламутровый</span>
+            <span class="d">Совпадение 96% · разница неразличима глазом</span>
+          </div>
+        </div>
+        <h2 style="font-size:22px;margin:var(--s5) 0 var(--s3)">В чём колеруем этот оттенок</h2>
+        <div class="grid" style="grid-template-columns:1fr">
+          <article class="card" style="flex-direction:row">
+            <div class="art" style="width:120px;height:auto;flex:none"><div class="paint" style="background:#F4F1EA;inset:12px"></div></div>
+            <div style="display:flex;flex-direction:column;flex:1">
+              <div class="b"><span class="bl">Tikkurila</span>
+                <h3><a href="#" data-go="product">EURO MATT 3, база A, 9 л — колеровка в «Тёплый жемчуг»</a></h3>
+                <div class="attrs"><span>глубокоматовая</span><span>для стен</span></div>
+              </div>
+              <div class="f"><span class="price">8 250 ₽<small>+ колеровка на точке</small></span><a class="btn btn-primary btn-sm" href="#" data-go="product">Открыть</a></div>
+            </div>
+          </article>
+        </div>
+        <div class="state-box" style="margin-top:var(--s4);text-align:left;align-items:flex-start">
+          <h3 style="font-size:20px">Сколько купить</h3>
+          <p>Для комнаты 18 м² в два слоя хватит одной банки 9 л. Расчёт по расходу из техкарты — 7–12 м² на литр; на пористой штукатурке уходит больше.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-go="product">Добавить в заявку</a>
+            <a class="btn btn-ghost" href="#" data-go="compare">Сравнить с другими</a>
+            <button class="btn btn-ghost" type="button" data-go="scan">Снять другую стену</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- === МНОГО: несколько близких оттенков === -->
+      <div data-st="many" hidden>
+        <p style="margin-bottom:var(--s4);color:var(--muted)">На фото попало несколько оттенков — стена, откос и тень. Выберите тот, который нужен: разница между первыми тремя на глаз почти не видна.</p>
+        <div class="shade-wide" style="grid-template-columns:repeat(3,1fr)">
+          <a class="shade" href="#" data-go="scan-result"><i style="background:#EFE6D6"></i><span class="t"><b>Тёплый жемчуг</b><code>RV-1002 · 96%</code></span></a>
+          <a class="shade" href="#" data-go="scan-result"><i style="background:#E9E1CE"></i><span class="t"><b>Топлёное молоко</b><code>CL-1002 · 93%</code></span></a>
+          <a class="shade" href="#" data-go="scan-result"><i style="background:#E6D8BE"></i><span class="t"><b>Дюна шёлк</b><code>RV-1180 · 91%</code></span></a>
+          <a class="shade" href="#" data-go="scan-result"><i style="background:#EFEAE0"></i><span class="t"><b>Тёплый белый бетон</b><code>BT-102 · 88%</code></span></a>
+          <a class="shade" href="#" data-go="scan-result"><i style="background:#D6D4CE"></i><span class="t"><b>Серебристый камень</b><code>RV-3120 · 84%</code></span></a>
+          <a class="shade" href="#" data-go="scan-result"><i style="background:#F3EEE6"></i><span class="t"><b>Лён короед</b><code>KR-1010 · 82%</code></span></a>
+        </div>
+        <p class="note">Проценты — это близость к снятому цвету, а не «качество». Ниже 80% варианты не показываем: они уводят, а не помогают.</p>
+      </div>
+
+      <!-- === ОШИБКА === -->
+      <div data-st="error" hidden>
+        <div class="state-box err">
+          <span class="badge-emoji" aria-hidden="true">!</span>
+          <h3>Цвет по этому фото не определить</h3>
+          <p>Кадр пересвечен: половина стены ушла в белое пятно от лампы. Снимите ещё раз при дневном свете, без вспышки, держа телефон под углом к поверхности. Если не выходит — привезите образец на точку, подберём вручную.</p>
+          <div class="actions">
+            <button class="btn btn-primary" type="button" data-go="scan"><span class="lens" aria-hidden="true"></span>Снять заново</button>
+            <a class="btn btn-ghost" href="#" data-go="catalog">Выбрать цвет из каталога</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- правая колонка: одинакова во всех состояниях -->
+      <aside style="display:flex;flex-direction:column;gap:var(--s4)">
+        <div class="state-box" style="text-align:left;align-items:flex-start">
+          <h3 style="font-size:20px">Как снимать, чтобы попасть в цвет</h3>
+          <p>Дневной свет, без вспышки. Не снимайте против окна. Уберите из кадра посторонние цвета — мебель, ковёр. Если поверхность блестит, снимайте под углом.</p>
+        </div>
+        <div class="state-box" style="text-align:left;align-items:flex-start;background:var(--accent-soft);border-color:var(--accent-soft)">
+          <h3 style="font-size:20px">Не получилось на телефоне?</h3>
+          <p>Привезите образец — кусок обоев, плитку, дверцу шкафа — на точку в Коммунарке. Колеровщик подберёт вручную и заколерует при вас, 9:00–17:00.</p>
+          <a class="btn btn-ghost" href="tel:+79268409951">+7 (926) 840-99-51</a>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</main>
+
+<!-- ================= ЧТО ИЗМЕНИЛОСЬ (для показа Михаилу) ================= -->
+<section class="changes">
+  <div class="wrap">
+    <div class="sec-head"><h2>Что изменилось во второй версии</h2></div>
+    <div class="chlist">
+      <div><span class="mark new">2</span><div><b>Главная — по типам материала</b><p>Четыре плитки верхнего уровня: краски, пропитки для дерева, штукатурки, колеровка. «Водные, масляные, по металлу» ушли внутрь красок — это подуровень, а не первый экран. В первой версии ось была по видам работ (стены, фасад, металл), это была ошибка.</p></div></div>
+      <div><span class="mark new">2</span><div><b>Бренды — цветными плашками, а не пустыми рамками</b><p>Пока нет файлов логотипов, плитка держит цвет и смысл сама: цветная плашка, название, за что отвечает бренд, точное число позиций. Место под логотип зарезервировано — вёрстка не поедет, когда придут SVG.</p></div></div>
+      <div><span class="mark new">2</span><div><b>Подбор цвета — рабочий экран, а не заглушка</b><p>Сканер включён: съёмка, разбор, результат, расчёт банок и ошибка «пересвет». Функционал готов, выключен только на время тестов.</p></div></div>
+      <div><span class="mark new">2</span><div><b>Оттенки — вверху и с именами</b><p>На сайте Dufa они внизу и голыми номерами. У нас — в первом экране главной и рядом с ценой в карточке: «Тёплый жемчуг RV-1002», а не «RV-1002».</p></div></div>
+      <div><span class="mark new">2</span><div><b>Сравнение по характеристикам</b><p>Чекбокс в каждой карточке каталога, панель «сравнить» внизу, блок сравнения в карточке товара и отдельный экран на 3–5 колонок. Это то преимущество, о котором говорили: сравнивать не уходя с сайта.</p></div></div>
+      <div><span class="mark">✓</span><div><b>Ушли от чёрного фона</b><p>Светлое тёплое поле, цвет даёт товар. Тёмная тема в прототипе принудительно отключена, чтобы показ не зависел от настроек компьютера.</p></div></div>
+      <div><span class="mark">✓</span><div><b>Каталог перестал быть серым</b><p>Вместо серых заглушек — цвет самого материала на эталонном светлом поле, как выкраска на веере.</p></div></div>
+      <div><span class="mark">✓</span><div><b>«Подобрать цвет» — в шапке</b><p>Кнопка на каждом экране, повтор в первом экране главной и отдельным блоком.</p></div></div>
+      <div><span class="mark open">!</span><div><b>Счётчики по типам убраны</b><p>Разбор прайса черновой: 1 835 позиций из 3 811 ни в одну группу не попали. Числа по брендам показываем — они точные. Числа по типам вернём после перетегирования прайса.</p></div></div>
+      <div><span class="mark open">!</span><div><b>«Есть на точке» больше не пишем</b><p>Остатков в прайсе нет, поэтому в карточках «наличие уточним». Как только появится выгрузка остатков — вернём честный статус.</p></div></div>
+      <div><span class="mark open">!</span><div><b>Логотипы брендов — ждём файлы</b><p>SVG или PNG на прозрачном фоне от поставщиков. Чужие логотипы не рисуем и из поиска не берём.</p></div></div>
+      <div><span class="mark open">!</span><div><b>Уникальности брендов</b><p>С главной убраны — по вашему возражению: человек ищет решение своей задачи. Вернутся отдельным разделом, если решим, что он нужен.</p></div></div>
+    </div>
+    <p class="footnote">Прототип. Боевой сайт tkskarabey.ru не тронут, в код ничего не уехало. Источник требований — протокол звонка 08.09.2026, разделы 3 и 4. Следующий шаг после вашего «да» — посадочные под коммерческие запросы («краска для стен 9 литров», бренд + характеристика), чтобы запрос вёл на конкретную краску, а не в общий каталог.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap in">
+    <span>ТК СКАРАБЕЙ · Москва, пос. Коммунарка, ТОГК «Славянский мир», ряд З</span>
+    <span>Колеровка 9:00–17:00 · <a href="tel:+79268409951">+7 (926) 840-99-51</a></span>
+    <span><a href="#" data-go="home">Доставка</a> · <a href="#" data-go="home">Возврат колерованной краски</a> · <a href="#" data-go="home">Политика персональных данных</a></span>
+  </div>
+</footer>
+
+</div><!-- /app -->
+
+<script>
+(function(){
+  "use strict";
+  var state="norm", screen="home";
+  var screens=Array.prototype.slice.call(document.querySelectorAll(".screen"));
+  var note=document.getElementById("fallback-note");
+
+  function applyStates(){
+    var scr=document.querySelector('.screen[data-screen="'+screen+'"]');
+    if(!scr){return;}
+    var missing=false, groups=scr.querySelectorAll("[data-group]");
+    Array.prototype.forEach.call(groups,function(g){
+      var blocks=Array.prototype.filter.call(g.children,function(c){return c.hasAttribute("data-st");});
+      if(!blocks.length){return;}
+      var match=blocks.filter(function(b){return b.getAttribute("data-st").split(" ").indexOf(state)>-1;});
+      if(!match.length){
+        missing=true;
+        match=blocks.filter(function(b){return b.getAttribute("data-st").split(" ").indexOf("norm")>-1;});
+      }
+      blocks.forEach(function(b){b.hidden=match.indexOf(b)<0;});
+    });
+    note.hidden=!missing;
+  }
+
+  function showScreen(name){
+    // «order» и «scan-result» — не экраны, а состояния внутри экрана
+    if(name==="order"){screen="product";state="order";}
+    else if(name==="scan-result"){screen="scan";state="scan-result";}
+    else {screen=name; if(state==="order"||state==="scan-result"){state="norm";}}
+    screens.forEach(function(s){s.hidden=s.getAttribute("data-screen")!==screen;});
+    document.querySelectorAll("[data-screen][role=tab]").forEach(function(t){
+      t.setAttribute("aria-selected",t.getAttribute("data-screen")===screen?"true":"false");
+    });
+    document.querySelectorAll("[data-state]").forEach(function(b){
+      b.setAttribute("aria-pressed",b.getAttribute("data-state")===state?"true":"false");
+    });
+    applyStates();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  document.querySelectorAll("[data-screen][role=tab]").forEach(function(t){
+    t.addEventListener("click",function(){showScreen(t.getAttribute("data-screen"));});
+  });
+  document.querySelectorAll("[data-state]").forEach(function(b){
+    b.addEventListener("click",function(){
+      state=b.getAttribute("data-state");
+      document.querySelectorAll("[data-state]").forEach(function(o){
+        o.setAttribute("aria-pressed",o===b?"true":"false");
+      });
+      applyStates();
+    });
+  });
+  document.querySelectorAll("[data-width]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var narrow=b.getAttribute("data-width")==="narrow";
+      document.body.classList.toggle("narrow",narrow);
+      document.querySelectorAll("[data-width]").forEach(function(o){
+        o.setAttribute("aria-pressed",o===b?"true":"false");
+      });
+    });
+  });
+  // ни одна кнопка не ведёт в никуда
+  document.addEventListener("click",function(e){
+    var el=e.target.closest("[data-go]");
+    if(!el){return;}
+    e.preventDefault();
+    showScreen(el.getAttribute("data-go"));
+  });
+  document.querySelectorAll(".colorf button, .vol button").forEach(function(b){
+    if(!b.hasAttribute("aria-pressed")){b.setAttribute("aria-pressed","false");}
+    b.addEventListener("click",function(){
+      if(b.parentElement.classList.contains("vol")){
+        b.parentElement.querySelectorAll("button").forEach(function(o){o.setAttribute("aria-pressed","false");});
+        b.setAttribute("aria-pressed","true");
+      } else {
+        b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true");
+      }
+    });
+  });
+  applyStates();
+})();
+</script>
+</body>
+</html>
